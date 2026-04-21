@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
+    /**
+     * PATCH /api/user/profile
+     * 로그인한 사용자의 이름/이메일 프로필 수정
+     *
+     * @param ProfileUpdateRequest $request
+     * @return JsonResponse
+     */
     public function update(ProfileUpdateRequest $request): JsonResponse
     {
         $request->user()->fill($request->validated());
@@ -25,6 +32,13 @@ class ProfileController extends Controller
         ]);
     }
 
+    /**
+     * DELETE /api/user
+     * 비밀번호 확인 후 현재 계정 삭제
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function destroy(Request $request): JsonResponse
     {
         $request->validate([
