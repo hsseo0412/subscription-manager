@@ -28,11 +28,11 @@ cd frontend && npm run dev   # http://localhost:5173
 ```
 
 ## 세부 가이드 (서브 CLAUDE.md)
-- @app/CLAUDE.md — 백엔드 컨트롤러/Service/Repository/Validation 규칙
-- @frontend/CLAUDE.md — 프론트엔드 컴포넌트/상태관리/API 호출 규칙
-- @database/CLAUDE.md — 마이그레이션/테이블 네이밍/DB 운영 규칙
-- @routes/CLAUDE.md — 전체 API 엔드포인트 레퍼런스
-- @docker/CLAUDE.md — Docker 서비스 구성 및 명령어
+- `app/CLAUDE.md` — 백엔드 컨트롤러/Service/Repository/Validation 규칙
+- `frontend/CLAUDE.md` — 프론트엔드 컴포넌트/상태관리/API 호출 규칙
+- `database/CLAUDE.md` — 마이그레이션/테이블 네이밍/DB 운영 규칙
+- `routes/CLAUDE.md` — 전체 API 엔드포인트 레퍼런스
+- `docker/CLAUDE.md` — Docker 서비스 구성 및 명령어
 
 ## 전역 개발 규칙
 - `.env`는 절대 수정하지 말 것
