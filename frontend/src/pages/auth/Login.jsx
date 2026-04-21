@@ -19,7 +19,7 @@ export default function Login() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({ resolver: zodResolver(schema) })
+  } = useForm({ resolver: zodResolver(schema), mode: 'onBlur' })
 
   const onSubmit = async (data) => {
     try {
@@ -104,7 +104,8 @@ export default function Login() {
               <label className="block text-sm font-medium text-gray-700">비밀번호</label>
               <button
                 type="button"
-                className="text-xs text-indigo-600 hover:text-indigo-500"
+                title="준비 중인 기능입니다"
+                className="text-xs text-gray-400 cursor-not-allowed"
               >
                 비밀번호 찾기
               </button>

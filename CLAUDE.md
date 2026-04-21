@@ -38,6 +38,7 @@ cd frontend && npm run dev   # http://localhost:5173
 - `.env`는 절대 수정하지 말 것
 - 마이그레이션 롤백 전에 반드시 확인
 - 커밋 메시지는 Conventional Commits 형식 + 한국어 설명
+- **커밋/푸시는 사용자 확인 후에만 실행** — 구현 완료 후 반드시 먼저 물어볼 것
 
 ### 커밋 메시지 형식
 ```
