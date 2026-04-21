@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreateSubscription, useUpdateSubscription } from '../hooks/useSubscriptions'
+import { POPULAR_SERVICES } from '../data/popularServices'
 
 const schema = z.object({
   name:          z.string().min(1, '서비스명을 입력해주세요.').max(100),
@@ -19,6 +20,12 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'
 
 export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
   const isEdit = !!editTarget
+
+  const [search, setSearch] = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [selectedService, setSelectedService] = useState(null)
+  const comboboxRef = useRef(null)
+
   const createMutation = useCreateSubscription()
   const updateMutation = useUpdateSubscription()
 
@@ -32,15 +39,14 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: {
-      billing_cycle: 'monthly',
-      billing_date: 1,
-      color: '#6366f1',
-    },
+    defaultValues: { billing_cycle: 'monthly', billing_date: 1, color: '#6366f1' },
   })
 
   useEffect(() => {
     if (isOpen) {
+      setSearch('')
+      setShowDropdown(false)
+      setSelectedService(null)
       reset(
         editTarget ?? {
           name: '', price: '', billing_cycle: 'monthly',
@@ -49,6 +55,38 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
       )
     }
   }, [isOpen, editTarget, reset])
+
+  // 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filtered = POPULAR_SERVICES.filter((s) =>
+    s.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const handleServiceSelect = (service) => {
+    setSelectedService(service)
+    setSearch('')
+    setShowDropdown(false)
+    setValue('name', service.name, { shouldValidate: true })
+    setValue('color', service.color)
+    setValue('category', service.category)
+  }
+
+  const handleClearService = () => {
+    setSelectedService(null)
+    setSearch('')
+    setValue('name', '')
+    setValue('color', '#6366f1')
+    setValue('category', '')
+  }
 
   const selectedColor = watch('color')
 
@@ -80,100 +118,166 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6 space-y-5">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 space-y-5">
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">
-            {isEdit ? '구독 수정' : '구독 추가'}
-          </h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-900">
+              {isEdit ? '구독 수정' : '구독 추가'}
+            </h2>
+            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* 인기 서비스 검색 — 등록 모드만 */}
+          {!isEdit && (
+            <div className="space-y-1" ref={comboboxRef}>
+              <label className="block text-sm font-medium text-gray-700">인기 서비스 검색</label>
+
+              {selectedService ? (
+                <div className="flex items-center gap-2 px-3 py-2 border border-indigo-400 bg-indigo-50 rounded-lg">
+                  <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: selectedService.color }} />
+                  <span className="text-sm font-medium text-indigo-800 flex-1">{selectedService.name}</span>
+                  <span className="text-xs text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full">{selectedService.category}</span>
+                  <button
+                    type="button"
+                    onClick={handleClearService}
+                    className="text-indigo-400 hover:text-indigo-600 ml-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setShowDropdown(true) }}
+                    onFocus={() => setShowDropdown(true)}
+                    placeholder="Netflix, Spotify..."
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  />
+
+                  {showDropdown && (
+                    <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {filtered.length > 0 ? (
+                        filtered.map((service) => (
+                          <li key={service.id}>
+                            <button
+                              type="button"
+                              onMouseDown={() => handleServiceSelect(service)}
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                            >
+                              <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: service.color }} />
+                              <span className="text-sm text-gray-800 flex-1">{service.name}</span>
+                              <span className="text-xs text-gray-400">{service.category}</span>
+                            </button>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-3 py-3 text-sm text-gray-400 text-center">검색 결과 없음</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+
+            {/* 서비스명 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">서비스명 *</label>
+              <input type="text" placeholder="Netflix" {...register('name')} className={inputClass(!!errors.name)} />
+              {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+            </div>
+
+            {/* 금액 + 결제 주기 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">금액 (원) *</label>
+                <input type="number" min="0" placeholder="17000" {...register('price')} className={inputClass(!!errors.price)} />
+                {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">결제 주기 *</label>
+                <select {...register('billing_cycle')} className={inputClass(!!errors.billing_cycle)}>
+                  <option value="monthly">매월</option>
+                  <option value="yearly">매년</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 결제일 + 카테고리 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">결제일 *</label>
+                <input type="number" min="1" max="31" placeholder="1" {...register('billing_date')} className={inputClass(!!errors.billing_date)} />
+                {errors.billing_date && <p className="text-xs text-red-500">{errors.billing_date.message}</p>}
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">카테고리</label>
+                <select {...register('category')} className={inputClass(false)}>
+                  <option value="">선택 안 함</option>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* 색상 */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">색상</label>
+              <div className="flex gap-2 items-center">
+                {COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setValue('color', c)}
+                    className={`w-7 h-7 rounded-full transition-transform ${selectedColor === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''}`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+                {/* 서비스 고유 색상이 팔레트에 없을 때 */}
+                {selectedColor && !COLORS.includes(selectedColor) && (
+                  <span
+                    className="w-7 h-7 rounded-full ring-2 ring-offset-2 ring-gray-400 scale-110 inline-block"
+                    style={{ backgroundColor: selectedColor }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* 메모 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">메모</label>
+              <textarea rows={2} placeholder="추가 메모" {...register('memo')} className={inputClass(false) + ' resize-none'} />
+            </div>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                {isSubmitting ? '저장 중...' : isEdit ? '수정' : '추가'}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-
-          {/* 서비스명 */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">서비스명 *</label>
-            <input type="text" placeholder="Netflix" {...register('name')} className={inputClass(!!errors.name)} />
-            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-          </div>
-
-          {/* 금액 + 결제 주기 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">금액 (원) *</label>
-              <input type="number" min="0" placeholder="17000" {...register('price')} className={inputClass(!!errors.price)} />
-              {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">결제 주기 *</label>
-              <select {...register('billing_cycle')} className={inputClass(!!errors.billing_cycle)}>
-                <option value="monthly">매월</option>
-                <option value="yearly">매년</option>
-              </select>
-            </div>
-          </div>
-
-          {/* 결제일 + 카테고리 */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">결제일 *</label>
-              <input type="number" min="1" max="31" placeholder="1" {...register('billing_date')} className={inputClass(!!errors.billing_date)} />
-              {errors.billing_date && <p className="text-xs text-red-500">{errors.billing_date.message}</p>}
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">카테고리</label>
-              <select {...register('category')} className={inputClass(false)}>
-                <option value="">선택 안 함</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-          </div>
-
-          {/* 색상 */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">색상</label>
-            <div className="flex gap-2">
-              {COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setValue('color', c)}
-                  className={`w-7 h-7 rounded-full transition-transform ${selectedColor === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''}`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 메모 */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">메모</label>
-            <textarea rows={2} placeholder="추가 메모" {...register('memo')} className={inputClass(false) + ' resize-none'} />
-          </div>
-
-          {/* 버튼 */}
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              {isSubmitting ? '저장 중...' : isEdit ? '수정' : '추가'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   )
