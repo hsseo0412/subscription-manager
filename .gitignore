@@ -27,7 +27,7 @@
 
 # Claude & bkit local state
 /.claude/
-/.bkit/runtime/
+/.bkit/
 Homestead.json
 Homestead.yaml
 Thumbs.db

@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -37,6 +38,18 @@ return Application::configure(basePath: dirname(__DIR__))
                     'method' => $request->method(),
                 ]);
                 return response()->json(['message' => '로그인이 필요합니다.'], 401);
+            }
+        });
+
+        // 권한 오류 → 403
+        $exceptions->render(function (AuthorizationException $e, Request $request) {
+            if ($request->expectsJson()) {
+                Log::warning('[Auth] Forbidden', [
+                    'url'     => $request->fullUrl(),
+                    'method'  => $request->method(),
+                    'user_id' => $request->user()?->id,
+                ]);
+                return response()->json(['message' => '접근 권한이 없습니다.'], 403);
             }
         });
 

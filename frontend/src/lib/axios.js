@@ -10,6 +10,21 @@ const api = axios.create({
   },
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status
+    const method = error.config?.method?.toUpperCase()
+    const url = error.config?.url
+
+    if (status >= 400) {
+      console.error(`[API Error] ${method} ${url} → ${status}`, error.response?.data ?? error.message)
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 export async function getCsrfCookie() {
   await api.get('/sanctum/csrf-cookie')
 }
