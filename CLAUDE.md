@@ -39,6 +39,16 @@ cd frontend && npm run dev   # http://localhost:5173
 - 커밋 메시지는 Conventional Commits 형식 + 한국어 설명
 - **커밋/푸시는 사용자 확인 후에만 실행** — 구현 완료 후 반드시 먼저 물어볼 것
 
+## 보안 현황
+| 항목 | 처리 방식 |
+| :--- | :--- |
+| CSRF | Sanctum CSRF 쿠키 자동 처리 |
+| XSS | React JSX 자동 이스케이프 + CSP 헤더 |
+| SQL Injection | Eloquent ORM 파라미터 바인딩 |
+| Rate Limiting | 인증 엔드포인트 IP당 분당 5회 (`throttle:auth`) |
+| Security Headers | `SecurityHeaders` 미들웨어 (전역 적용) |
+| CORS | `FRONTEND_URL` 환경변수 기반 허용 오리진 제한 |
+
 ### 커밋 메시지 형식
 ```
 타입: 한국어 설명

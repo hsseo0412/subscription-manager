@@ -39,6 +39,7 @@ const { data } = await api.post('/api/auth/login', credentials)
 - default export 사용
 - props 타입이 복잡하면 상단에 JSDoc 주석
 - Tailwind CSS만 사용 (인라인 style 금지)
+- `dangerouslySetInnerHTML` 사용 금지 — XSS 위험
 
 ## 라우팅
 - React Router v6 사용

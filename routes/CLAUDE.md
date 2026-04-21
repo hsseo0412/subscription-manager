@@ -90,3 +90,4 @@
 - 인증 불필요: `Route::post('...', [...])` (api.php 상단 그룹)
 - 인증 필요: `Route::middleware('auth:sanctum')->group(...)` 내부에 추가
 - 컨트롤러: `app/Http/Controllers/Api/` 에 생성
+- 외부 노출 엔드포인트에 브루트포스 위험이 있으면 `throttle:auth` 미들웨어 적용 (AppServiceProvider에서 limiter 정의)

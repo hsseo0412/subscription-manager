@@ -20,7 +20,7 @@ class SubscriptionRequest extends FormRequest
             'billing_date'  => ['required', 'integer', 'min:1', 'max:31'],
             'category'      => ['nullable', 'string', 'max:50'],
             'color'         => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'memo'          => ['nullable', 'string'],
+            'memo'          => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -38,6 +38,7 @@ class SubscriptionRequest extends FormRequest
             'billing_date.min'       => '결제일은 1일 이상이어야 합니다.',
             'billing_date.max'       => '결제일은 31일 이하여야 합니다.',
             'color.regex'            => '색상은 #RRGGBB 형식이어야 합니다.',
+            'memo.max'               => '메모는 500자 이하여야 합니다.',
         ];
     }
 }

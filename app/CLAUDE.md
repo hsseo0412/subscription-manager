@@ -59,3 +59,6 @@ public function messages(): array
 - `$fillable` 명시 필수
 - 관계 메서드는 camelCase (hasMany, belongsTo 등)
 - `$casts` 배열로 타입 캐스팅 명시
+
+## 보안
+- Raw 쿼리 사용 시 반드시 바인딩: `whereRaw('col = ?', [$value])` (문자열 보간 금지)
