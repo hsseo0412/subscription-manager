@@ -3,16 +3,20 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreateSubscription, useUpdateSubscription } from '../hooks/useSubscriptions'
+import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import { POPULAR_SERVICES } from '../data/popularServices'
 
+const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
+
 const schema = z.object({
-  name:          z.string().min(1, '서비스명을 입력해주세요.').max(100),
-  price:         z.coerce.number({ invalid_type_error: '금액을 입력해주세요.' }).int().min(0, '금액은 0 이상이어야 합니다.'),
-  billing_cycle: z.enum(['monthly', 'yearly'], { required_error: '결제 주기를 선택해주세요.' }),
-  billing_date:  z.coerce.number().int().min(1).max(31),
-  category:      z.string().max(50).optional().or(z.literal('')),
-  color:         z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
-  memo:          z.string().optional().or(z.literal('')),
+  name:              z.string().min(1, '서비스명을 입력해주세요.').max(100),
+  price:             z.coerce.number({ invalid_type_error: '금액을 입력해주세요.' }).int().min(0, '금액은 0 이상이어야 합니다.'),
+  billing_cycle:     z.enum(['monthly', 'yearly'], { required_error: '결제 주기를 선택해주세요.' }),
+  billing_date:      z.coerce.number().int().min(1).max(31),
+  payment_method_id: z.coerce.number({ required_error: '결제수단을 선택해주세요.' }).int().positive('결제수단을 선택해주세요.'),
+  category:          z.string().max(50).optional().or(z.literal('')),
+  color:             z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
+  memo:              z.string().optional().or(z.literal('')),
 })
 
 const CATEGORIES = ['동영상', '음악', '게임', '업무', '클라우드', '쇼핑', '기타']
@@ -20,6 +24,7 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'
 
 export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
   const isEdit = !!editTarget
+  const { data: paymentMethods = [] } = usePaymentMethods()
 
   const [search, setSearch] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
@@ -212,6 +217,23 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                   <option value="yearly">매년</option>
                 </select>
               </div>
+            </div>
+
+            {/* 결제수단 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">결제수단 *</label>
+              <select {...register('payment_method_id')} className={inputClass(!!errors.payment_method_id)}>
+                <option value="">선택해주세요</option>
+                {paymentMethods.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {TYPE_LABELS[m.type]} · {m.name}{m.last4 ? ` (${m.last4})` : ''}
+                  </option>
+                ))}
+              </select>
+              {errors.payment_method_id && <p className="text-xs text-red-500">{errors.payment_method_id.message}</p>}
+              {paymentMethods.length === 0 && (
+                <p className="text-xs text-amber-500">마이 페이지에서 결제수단을 먼저 등록해주세요.</p>
+              )}
             </div>
 
             {/* 결제일 + 카테고리 */}

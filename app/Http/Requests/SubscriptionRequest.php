@@ -20,7 +20,8 @@ class SubscriptionRequest extends FormRequest
             'billing_date'  => ['required', 'integer', 'min:1', 'max:31'],
             'category'      => ['nullable', 'string', 'max:50'],
             'color'         => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'memo'          => ['nullable', 'string', 'max:500'],
+            'memo'               => ['nullable', 'string', 'max:500'],
+            'payment_method_id'  => ['required', 'integer', 'exists:payment_methods,id'],
         ];
     }
 
@@ -39,6 +40,8 @@ class SubscriptionRequest extends FormRequest
             'billing_date.max'       => '결제일은 31일 이하여야 합니다.',
             'color.regex'            => '색상은 #RRGGBB 형식이어야 합니다.',
             'memo.max'               => '메모는 500자 이하여야 합니다.',
+            'payment_method_id.required' => '결제수단을 선택해주세요.',
+            'payment_method_id.exists'   => '유효하지 않은 결제수단입니다.',
         ];
     }
 }

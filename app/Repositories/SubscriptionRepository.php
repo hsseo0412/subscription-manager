@@ -16,6 +16,7 @@ class SubscriptionRepository
     public function findByUser(int $userId): Collection
     {
         return Subscription::where('user_id', $userId)
+            ->with('paymentMethod')
             ->orderBy('billing_date')
             ->get();
     }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -26,4 +27,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('subscriptions', SubscriptionController::class)->only([
         'index', 'store', 'update', 'destroy',
     ]);
+
+    Route::apiResource('payment-methods', PaymentMethodController::class)->only([
+        'index', 'store', 'update', 'destroy',
+    ]);
+
+    Route::patch('user/password', [ProfileController::class, 'updatePassword']);
 });

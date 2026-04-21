@@ -16,6 +16,7 @@ class Subscription extends Model
         'category',
         'color',
         'memo',
+        'payment_method_id',
     ];
 
     protected $casts = [
@@ -26,5 +27,10 @@ class Subscription extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class);
     }
 }
