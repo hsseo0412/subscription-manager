@@ -46,6 +46,48 @@ return response()->json(['message' => '삭제되었습니다.']);
 Controller → Service → Repository → Model
 ```
 
+### Service/Repository 주석 규칙
+- 모든 public 메서드 위에 PHPDoc 블록 필수
+- Service: 비즈니스 규칙/계산 로직이 있는 경우 설명 추가
+- Repository: 쿼리 조건(정렬, 필터 등) 명시
+
+```php
+// Service 예시
+/**
+ * 로그인한 사용자의 구독 목록 반환
+ *
+ * @param int $userId
+ * @return Collection
+ */
+public function getUserSubscriptions(int $userId): Collection
+{
+    ...
+}
+
+/**
+ * 월 환산 총 구독료 계산 (yearly는 /12 반올림)
+ *
+ * @param Collection $subscriptions
+ * @return int
+ */
+public function calcMonthlyTotal(Collection $subscriptions): int
+{
+    ...
+}
+
+// Repository 예시
+/**
+ * user_id로 구독 목록 조회 (billing_date 오름차순)
+ *
+ * @param int $userId
+ * @return Collection
+ */
+public function findByUser(int $userId): Collection
+{
+    ...
+}
+```
+
 ## Validation
 - 메시지는 한국어로 작성
 - Form Request 클래스 사용 (`app/Http/Requests/`)

@@ -1,10 +1,11 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Throwable;
+use Illuminate\Support\Facades\Log;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,11 +18,33 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (Throwable $e, Request $request) {
+
+        // 모든 예외를 로그로 기록
+        $exceptions->report(function (Throwable $e) {
+            Log::error('[Exception] ' . get_class($e) . ': ' . $e->getMessage(), [
+                'file'    => $e->getFile() . ':' . $e->getLine(),
+                'url'     => request()?->fullUrl(),
+                'method'  => request()?->method(),
+                'user_id' => request()?->user()?->id,
+            ]);
+        });
+
+        // 인증 오류 → 401
+        $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => '서버 오류가 발생했습니다.',
-                ], 500);
+                Log::warning('[Auth] Unauthenticated', [
+                    'url'    => $request->fullUrl(),
+                    'method' => $request->method(),
+                ]);
+                return response()->json(['message' => '로그인이 필요합니다.'], 401);
             }
         });
+
+        // 그 외 서버 오류 → 500
+        $exceptions->render(function (Throwable $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => '서버 오류가 발생했습니다.'], 500);
+            }
+        });
+
     })->create();

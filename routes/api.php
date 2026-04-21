@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [RegisteredUserController::class, 'store']);
@@ -20,4 +22,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::patch('user/profile', [ProfileController::class, 'update']);
     Route::delete('user', [ProfileController::class, 'destroy']);
+
+    Route::apiResource('subscriptions', SubscriptionController::class)->only([
+        'index', 'store', 'update', 'destroy',
+    ]);
 });
