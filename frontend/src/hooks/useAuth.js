@@ -33,11 +33,16 @@ export function useAuth() {
     [setUser, navigate],
   )
 
-  /** POST /api/auth/logout — 로그아웃 후 로그인 페이지로 이동 */
+  /** POST /api/auth/logout — 로그아웃 후 로그인 페이지로 이동 (세션 만료 시에도 로컬 로그아웃 처리) */
   const logout = useCallback(async () => {
-    await api.post('/api/auth/logout')
-    clearUser()
-    navigate('/login')
+    try {
+      await api.post('/api/auth/logout')
+    } catch {
+      // 세션 만료(401) 등 서버 오류와 무관하게 로컬 상태는 항상 초기화
+    } finally {
+      clearUser()
+      navigate('/login')
+    }
   }, [clearUser, navigate])
 
   return { user, login, register, logout }

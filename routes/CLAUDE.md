@@ -64,6 +64,28 @@
 { "message": "계정이 삭제되었습니다." }
 ```
 
+## 구독 API `[인증 필요]`
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| GET | `/api/subscriptions` | 목록 조회 (monthly_total 포함) |
+| POST | `/api/subscriptions` | 등록 → 201 |
+| PUT | `/api/subscriptions/{id}` | 수정 (타인 403) → 200 |
+| DELETE | `/api/subscriptions/{id}` | 삭제 (타인 403) → 200 |
+
+### 필드 명세
+| 필드 | 타입 | 필수 | 비고 |
+|------|------|------|------|
+| `name` | string | ✅ | 최대 255자 |
+| `price` | integer | ✅ | 원 단위, 0 이상 |
+| `billing_cycle` | enum | ✅ | `monthly` / `yearly` |
+| `billing_date` | integer | ✅ | 1~31 |
+| `category` | string | - | |
+| `color` | string | - | 예: `#E50914` |
+| `memo` | string | - | 최대 500자 |
+
+`monthly_total`: monthly는 price 합산, yearly는 price/12 반올림 후 합산
+
 ## 신규 라우트 추가 규칙
 - 인증 불필요: `Route::post('...', [...])` (api.php 상단 그룹)
 - 인증 필요: `Route::middleware('auth:sanctum')->group(...)` 내부에 추가

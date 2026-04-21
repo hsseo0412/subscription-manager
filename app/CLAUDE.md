@@ -1,25 +1,10 @@
 # Backend 개발 가이드
 
-## 컨트롤러 규칙
-- 신규 API 컨트롤러는 반드시 `app/Http/Controllers/Api/` 에 생성
-- 반환 타입은 항상 `JsonResponse`
-- 응답 형식: `{ "data": ..., "message": "..." }`
-- 성공: 200/201, 유효성 오류: 422, 인증 오류: 401, 권한 오류: 403
-- 모든 public 메서드 위에 PHPDoc 블록으로 **라우트 주소**와 **기능 설명** 필수
+## 공통 규칙
+- 모든 public 메서드 위에 PHPDoc 필수: 기능 설명 + `@param` + `@return`
+- Controller는 라우트 주소도 첫 줄에 기재
 
 ```php
-/**
- * POST /api/auth/register
- * 신규 사용자 회원가입 처리 및 자동 로그인
- *
- * @param Request $request
- * @return JsonResponse
- */
-public function store(Request $request): JsonResponse
-{
-    ...
-}
-
 /**
  * GET /api/subscriptions
  * 로그인한 사용자의 구독 목록 반환
@@ -27,12 +12,15 @@ public function store(Request $request): JsonResponse
  * @param Request $request
  * @return JsonResponse
  */
-public function index(Request $request): JsonResponse
-{
-    ...
-}
+```
 
-// 응답 예시
+## 컨트롤러 규칙
+- 신규 API 컨트롤러는 반드시 `app/Http/Controllers/Api/` 에 생성
+- 반환 타입은 항상 `JsonResponse`
+- 응답 형식: `{ "data": ..., "message": "..." }`
+- 성공: 200/201, 유효성 오류: 422, 인증 오류: 401, 권한 오류: 403
+
+```php
 return response()->json(['data' => $resource, 'message' => '생성되었습니다.'], 201);
 return response()->json(['message' => '삭제되었습니다.']);
 ```
@@ -41,51 +29,10 @@ return response()->json(['message' => '삭제되었습니다.']);
 - 비즈니스 로직 → `app/Services/{Domain}Service.php`
 - DB 접근 → `app/Repositories/{Domain}Repository.php`
 - 컨트롤러는 Service만 호출, DB 직접 접근 금지
+- Repository: 쿼리 조건(정렬, 필터 등) PHPDoc에 명시
 
 ```
 Controller → Service → Repository → Model
-```
-
-### Service/Repository 주석 규칙
-- 모든 public 메서드 위에 PHPDoc 블록 필수
-- Service: 비즈니스 규칙/계산 로직이 있는 경우 설명 추가
-- Repository: 쿼리 조건(정렬, 필터 등) 명시
-
-```php
-// Service 예시
-/**
- * 로그인한 사용자의 구독 목록 반환
- *
- * @param int $userId
- * @return Collection
- */
-public function getUserSubscriptions(int $userId): Collection
-{
-    ...
-}
-
-/**
- * 월 환산 총 구독료 계산 (yearly는 /12 반올림)
- *
- * @param Collection $subscriptions
- * @return int
- */
-public function calcMonthlyTotal(Collection $subscriptions): int
-{
-    ...
-}
-
-// Repository 예시
-/**
- * user_id로 구독 목록 조회 (billing_date 오름차순)
- *
- * @param int $userId
- * @return Collection
- */
-public function findByUser(int $userId): Collection
-{
-    ...
-}
 ```
 
 ## Validation
