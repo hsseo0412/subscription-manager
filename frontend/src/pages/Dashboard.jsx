@@ -53,40 +53,40 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
     : null
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between gap-4 ${subscription.status === 'cancelled' ? 'opacity-60' : ''}`}>
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-10 h-10 rounded-xl flex-shrink-0" style={{ backgroundColor: subscription.color || '#6366f1' }} />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-2 ${subscription.status === 'cancelled' ? 'opacity-60' : ''}`}>
+      {/* 1행: 색상 점 + 서비스명/상태 + 금액 */}
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-xl flex-shrink-0 mt-0.5" style={{ backgroundColor: subscription.color || '#6366f1' }} />
+        <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
+          <div className="min-w-0">
             <p className="font-semibold text-gray-900 truncate">{subscription.name}</p>
-            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_STYLES[subscription.status]}`}>
-              {STATUS_LABELS[subscription.status]}
-            </span>
           </div>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {subscription.category && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{subscription.category}</span>
-            )}
-            <span className="text-xs text-gray-400">
-              {isYearly && subscription.billing_month
-                ? `매년 ${subscription.billing_month}월 ${subscription.billing_date}일`
-                : `매월 ${subscription.billing_date}일`}
-            </span>
-            {subscription.days_until_billing != null && subscription.status === 'active' && (
-              <DdayBadge days={subscription.days_until_billing} />
+          <div className="text-right flex-shrink-0">
+            <p className="font-bold text-gray-900 text-sm">{formatPrice(subscription.price)}</p>
+            <p className="text-xs text-gray-400">{isYearly ? '/ 년' : '/ 월'}</p>
+            {perPerson && (
+              <p className="text-xs text-indigo-400">1인 {formatPrice(perPerson)}</p>
             )}
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="text-right">
-          <p className="font-bold text-gray-900">{formatPrice(subscription.price)}</p>
-          <p className="text-xs text-gray-400">{isYearly ? '/ 년' : '/ 월'}</p>
-          {perPerson && (
-            <p className="text-xs text-indigo-400">1인 {formatPrice(perPerson)}</p>
+
+      {/* 2행: 메타 정보 + 액션 버튼 */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+          {subscription.category && (
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{subscription.category}</span>
+          )}
+          <span className="text-xs text-gray-400">
+            {isYearly && subscription.billing_month
+              ? `매년 ${subscription.billing_month}월 ${subscription.billing_date}일`
+              : `매월 ${subscription.billing_date}일`}
+          </span>
+          {subscription.days_until_billing != null && subscription.status === 'active' && (
+            <DdayBadge days={subscription.days_until_billing} />
           )}
         </div>
-        <div className="flex gap-1 items-center">
+        <div className="flex gap-1 items-center flex-shrink-0">
           <select
             value={subscription.status}
             onChange={(e) => onStatusChange(subscription.id, e.target.value)}
