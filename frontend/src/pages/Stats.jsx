@@ -40,7 +40,7 @@ export default function Stats() {
               대시보드
             </Link>
             <Link to="/mypage" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors">
-              {user?.name}
+              마이페이지
             </Link>
             <button onClick={logout} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
               로그아웃

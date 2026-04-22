@@ -35,4 +35,5 @@ Route::middleware('auth:sanctum')->group(function () {
     ]);
 
     Route::patch('user/password', [ProfileController::class, 'updatePassword']);
+    Route::post('user/password/check', [ProfileController::class, 'checkPassword']);
 });

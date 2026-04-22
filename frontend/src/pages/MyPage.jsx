@@ -1,15 +1,16 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '../lib/axios'
 import { useAuth } from '../hooks/useAuth'
+import useAuthStore from '../stores/authStore'
 import { usePaymentMethods, useDeletePaymentMethod } from '../hooks/usePaymentMethods'
 import PaymentMethodModal from '../components/PaymentMethodModal'
 
 const profileSchema = z.object({
-  name:  z.string().min(1, '이름을 입력해주세요.'),
-  email: z.string().email('올바른 이메일을 입력해주세요.'),
+  name: z.string().min(1, '이름을 입력해주세요.'),
 })
 
 const passwordSchema = z.object({
@@ -25,7 +26,7 @@ const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', 
 const TYPE_COLORS = { card: 'bg-blue-100 text-blue-700', transfer: 'bg-green-100 text-green-700', cash: 'bg-yellow-100 text-yellow-700', etc: 'bg-gray-100 text-gray-600' }
 
 export default function MyPage() {
-  const { user, login } = useAuth()
+  const { user, logout } = useAuth()
   const { data: paymentMethods = [] } = usePaymentMethods()
   const deleteMutation = useDeletePaymentMethod()
 
@@ -36,17 +37,19 @@ export default function MyPage() {
 
   const profileForm = useForm({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: user?.name ?? '', email: user?.email ?? '' },
+    defaultValues: { name: user?.name ?? '' },
   })
 
   const passwordForm = useForm({
     resolver: zodResolver(passwordSchema),
+    mode: 'onBlur',
     defaultValues: { current_password: '', password: '', password_confirmation: '' },
   })
 
   const onProfileSubmit = async (data) => {
     try {
       await api.patch('/api/user/profile', data)
+      useAuthStore.getState().setUser({ ...user, name: data.name })
       setProfileMsg({ type: 'success', text: '프로필이 업데이트되었습니다.' })
     } catch (err) {
       if (err.response?.status === 422) {
@@ -89,9 +92,26 @@ export default function MyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/dashboard"
+              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <h1 className="text-lg font-bold text-gray-900">마이 페이지</h1>
+          </div>
+          <button onClick={logout} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            로그아웃
+          </button>
+        </div>
+      </nav>
 
-        <h1 className="text-2xl font-bold text-gray-900">마이 페이지</h1>
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
         {/* 프로필 수정 */}
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
@@ -104,8 +124,13 @@ export default function MyPage() {
             </div>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">이메일</label>
-              <input type="email" {...profileForm.register('email')} className={inputClass(!!profileForm.formState.errors.email)} />
-              {profileForm.formState.errors.email && <p className="text-xs text-red-500">{profileForm.formState.errors.email.message}</p>}
+              <input
+                type="email"
+                value={user?.email ?? ''}
+                disabled
+                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+              />
+              <p className="text-xs text-gray-400">이메일은 변경할 수 없습니다.</p>
             </div>
             {profileMsg && (
               <p className={`text-sm ${profileMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{profileMsg.text}</p>
@@ -128,13 +153,33 @@ export default function MyPage() {
               { name: 'current_password', label: '현재 비밀번호' },
               { name: 'password', label: '새 비밀번호' },
               { name: 'password_confirmation', label: '새 비밀번호 확인' },
-            ].map(({ name, label }) => (
-              <div key={name} className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">{label}</label>
-                <input type="password" {...passwordForm.register(name)} className={inputClass(!!passwordForm.formState.errors[name])} />
-                {passwordForm.formState.errors[name] && <p className="text-xs text-red-500">{passwordForm.formState.errors[name].message}</p>}
-              </div>
-            ))}
+            ].map(({ name, label }) => {
+              const { onBlur: rhfOnBlur, ...rest } = passwordForm.register(name)
+              return (
+                <div key={name} className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">{label}</label>
+                  <input
+                    type="password"
+                    {...rest}
+                    onBlur={async (e) => {
+                      rhfOnBlur(e)
+                      if (name === 'current_password') {
+                        const val = passwordForm.getValues('current_password')
+                        if (!val) return
+                        try {
+                          await api.post('/api/user/password/check', { current_password: val })
+                          passwordForm.clearErrors('current_password')
+                        } catch {
+                          passwordForm.setError('current_password', { message: '현재 비밀번호와 일치하지 않습니다.' })
+                        }
+                      }
+                    }}
+                    className={inputClass(!!passwordForm.formState.errors[name])}
+                  />
+                  {passwordForm.formState.errors[name] && <p className="text-xs text-red-500">{passwordForm.formState.errors[name].message}</p>}
+                </div>
+              )
+            })}
             {passwordMsg && (
               <p className={`text-sm ${passwordMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{passwordMsg.text}</p>
             )}

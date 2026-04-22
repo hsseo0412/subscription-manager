@@ -60,6 +60,28 @@ class ProfileController extends Controller
     }
 
     /**
+     * POST /api/user/password/check
+     * 현재 비밀번호 일치 여부만 확인 (변경 없음)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function checkPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => ['required'],
+        ]);
+
+        if (!Hash::check($request->current_password, $request->user()->password)) {
+            return response()->json([
+                'errors' => ['current_password' => ['현재 비밀번호와 일치하지 않습니다.']],
+            ], 422);
+        }
+
+        return response()->json(['message' => 'ok']);
+    }
+
+    /**
      * DELETE /api/user
      * 비밀번호 확인 후 현재 계정 삭제
      *
