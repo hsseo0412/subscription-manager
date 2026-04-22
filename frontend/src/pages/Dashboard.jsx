@@ -107,6 +107,9 @@ export default function Dashboard() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortKey, setSortKey] = useState('billing_date')
+  const [categoryFilter, setCategoryFilter] = useState('')
 
   const subscriptions  = data?.subscriptions ?? []
   const monthlyTotal   = data?.monthly_total ?? 0
@@ -120,6 +123,15 @@ export default function Dashboard() {
     }, 0)
     return { ...m, count: linked.length, total }
   }).filter((m) => m.count > 0)
+
+  const displayed = subscriptions
+    .filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((s) => !categoryFilter || s.category === categoryFilter)
+    .sort((a, b) => {
+      if (sortKey === 'price') return b.price - a.price
+      if (sortKey === 'name')  return a.name.localeCompare(b.name, 'ko')
+      return a.billing_date - b.billing_date
+    })
 
   const handleEdit        = (subscription) => { setEditTarget(subscription); setModalOpen(true) }
   const handleAdd         = () => { setEditTarget(null); setModalOpen(true) }
@@ -202,6 +214,41 @@ export default function Dashboard() {
             </button>
           </div>
 
+          {/* 검색 + 정렬 */}
+          <div className="flex gap-2">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="text-sm border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="">전체 카테고리</option>
+              {['동영상', '음악', '게임', '업무', '클라우드', '쇼핑', '기타'].map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <div className="relative flex-1">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="서비스명 검색"
+                className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+              />
+            </div>
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              className="text-sm border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="billing_date">결제일순</option>
+              <option value="price">금액높은순</option>
+              <option value="name">이름순</option>
+            </select>
+          </div>
+
           {/* 상태 필터 탭 */}
           <div className="flex gap-1">
             {FILTER_TABS.map((tab) => (
@@ -230,9 +277,13 @@ export default function Dashboard() {
                 </button>
               )}
             </div>
+          ) : displayed.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+              <p className="text-gray-400 text-sm">검색 결과가 없습니다.</p>
+            </div>
           ) : (
             <div className="space-y-2">
-              {subscriptions.map((sub) => (
+              {displayed.map((sub) => (
                 <SubscriptionCard
                   key={sub.id}
                   subscription={sub}
