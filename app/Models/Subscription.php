@@ -19,6 +19,7 @@ class Subscription extends Model
         'payment_method_id',
         'status',
         'members',
+        'website',
     ];
 
     protected $casts = [

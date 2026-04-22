@@ -79,6 +79,18 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
           )}
         </div>
         <div className="flex gap-1 items-center">
+          {subscription.website && (
+            <a
+              href={subscription.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          )}
           <select
             value={subscription.status}
             onChange={(e) => onStatusChange(subscription.id, e.target.value)}

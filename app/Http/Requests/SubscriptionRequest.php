@@ -24,6 +24,7 @@ class SubscriptionRequest extends FormRequest
             'payment_method_id'  => ['required', 'integer', 'exists:payment_methods,id'],
             'status'             => ['sometimes', 'in:active,paused,cancelled'],
             'members'            => ['sometimes', 'integer', 'min:1', 'max:99'],
+            'website'            => ['nullable', 'url', 'max:255'],
         ];
     }
 
@@ -47,6 +48,8 @@ class SubscriptionRequest extends FormRequest
             'status.in'              => '유효하지 않은 상태값입니다.',
             'members.min'            => '인원수는 1명 이상이어야 합니다.',
             'members.max'            => '인원수는 99명 이하여야 합니다.',
+            'website.url'            => '올바른 URL 형식이어야 합니다.',
+            'website.max'            => 'URL은 255자 이하여야 합니다.',
         ];
     }
 }

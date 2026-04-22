@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { useCreateSubscription, useUpdateSubscription } from '../hooks/useSubscriptions'
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import { POPULAR_SERVICES } from '../data/popularServices'
+import { SERVICE_WEBSITE_MAP } from '../data/popularServices'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
 
@@ -17,6 +18,7 @@ const schema = z.object({
   category:          z.string().max(50).optional().or(z.literal('')),
   color:             z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
   memo:              z.string().optional().or(z.literal('')),
+  website:           z.string().url('올바른 URL 형식이어야 합니다.').optional().or(z.literal('')),
   members:           z.coerce.number().int().min(1, '인원수는 1명 이상이어야 합니다.').max(99).default(1),
 })
 
@@ -84,6 +86,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     setValue('name', service.name, { shouldValidate: true })
     setValue('color', service.color)
     setValue('category', service.category)
+    setValue('website', service.website ?? '')
   }
 
   const handleClearService = () => {
@@ -92,6 +95,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     setValue('name', '')
     setValue('color', '#6366f1')
     setValue('category', '')
+    setValue('website', '')
   }
 
   const selectedColor = watch('color')
@@ -294,6 +298,13 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                   />
                 )}
               </div>
+            </div>
+
+            {/* 홈페이지 URL */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">홈페이지 URL</label>
+              <input type="url" placeholder="https://example.com" {...register('website')} className={inputClass(!!errors.website)} />
+              {errors.website && <p className="text-xs text-red-500">{errors.website.message}</p>}
             </div>
 
             {/* 메모 */}
