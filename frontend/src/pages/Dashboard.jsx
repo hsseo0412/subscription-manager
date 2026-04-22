@@ -5,11 +5,18 @@ import {
   useSubscriptions,
   useDeleteSubscription,
   useUpdateSubscriptionStatus,
+  useSubscriptionStats,
 } from '../hooks/useSubscriptions'
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import SubscriptionModal from '../components/SubscriptionModal'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
+
+const CHART_COLORS = [
+  '#6366f1', '#10b981', '#f59e0b', '#ef4444',
+  '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6',
+]
 
 const STATUS_LABELS = { active: '활성', paused: '일시정지', cancelled: '해지' }
 const STATUS_STYLES = {
@@ -102,6 +109,7 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState(undefined)
   const { data, isLoading } = useSubscriptions(statusFilter)
   const { data: paymentMethods = [] } = usePaymentMethods()
+  const { data: statsData } = useSubscriptionStats()
   const deleteMutation = useDeleteSubscription()
   const statusMutation = useUpdateSubscriptionStatus()
 
@@ -113,6 +121,8 @@ export default function Dashboard() {
 
   const subscriptions  = data?.subscriptions ?? []
   const monthlyTotal   = data?.monthly_total ?? 0
+  const breakdown      = statsData?.category_breakdown ?? []
+  const annualForecast = statsData?.annual_forecast ?? 0
 
   // 결제수단별 집계 — active 구독만 포함
   const paymentSummary = paymentMethods.map((m) => {
@@ -148,9 +158,6 @@ export default function Dashboard() {
             <span className="text-lg font-bold text-gray-900">SubManager</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/stats" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors">
-              통계
-            </Link>
             <Link to="/mypage" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors">
               마이페이지
             </Link>
@@ -161,20 +168,24 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 pt-8 pb-16 space-y-6">
 
         {/* 요약 카드 */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="bg-indigo-600 rounded-2xl p-5 text-white">
             <p className="text-sm text-indigo-200">이번 달 총 구독료</p>
-            <p className="text-3xl font-bold mt-1">{formatPrice(monthlyTotal)}</p>
+            <p className="text-2xl font-bold mt-1">{formatPrice(monthlyTotal)}</p>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
             <p className="text-sm text-gray-500">활성 구독</p>
-            <p className="text-3xl font-bold mt-1 text-gray-900">
+            <p className="text-2xl font-bold mt-1 text-gray-900">
               {subscriptions.filter((s) => s.status === 'active').length}
               <span className="text-base font-normal text-gray-400 ml-1">개</span>
             </p>
+          </div>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <p className="text-sm text-gray-500">연간 예상 지출</p>
+            <p className="text-2xl font-bold mt-1 text-gray-900">{formatPrice(annualForecast)}</p>
           </div>
         </div>
 
@@ -195,6 +206,45 @@ export default function Dashboard() {
                   <p className="text-base font-bold text-gray-900">{formatPrice(m.total)}<span className="text-xs font-normal text-gray-400">/월</span></p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* 카테고리별 지출 */}
+        {breakdown.length > 0 && (
+          <div className="space-y-2">
+            <h2 className="text-base font-semibold text-gray-900">카테고리별 지출</h2>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center gap-6">
+              <div className="flex-shrink-0">
+                <ResponsiveContainer width={160} height={160}>
+                  <PieChart>
+                    <Pie
+                      data={breakdown}
+                      dataKey="monthly_cost"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={70}
+                    >
+                      {breakdown.map((_, index) => (
+                        <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value.toLocaleString('ko-KR') + '원', '월 구독료']} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className="flex-1 space-y-1.5">
+                {breakdown.slice().sort((a, b) => b.monthly_cost - a.monthly_cost).map((item, index) => (
+                  <li key={item.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
+                      <span className="text-gray-700">{item.name}</span>
+                    </div>
+                    <span className="font-medium text-gray-900">{item.monthly_cost.toLocaleString('ko-KR')}원</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}

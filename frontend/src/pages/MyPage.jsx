@@ -111,7 +111,7 @@ export default function MyPage() {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 pt-8 pb-16 space-y-6">
 
         {/* 프로필 수정 */}
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
