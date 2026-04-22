@@ -36,8 +36,8 @@ const CATEGORIES = ['동영상', '음악', '게임', '업무', '클라우드', '
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899']
 
 const selectClass = (hasError) =>
-  `block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-    hasError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'
+  `block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition dark:text-gray-100 ${
+    hasError ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-700'
   }`
 
 export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
@@ -146,13 +146,13 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
           {/* 인기 서비스 검색 — 등록 모드만 */}
           {!isEdit && (
             <div className="space-y-1" ref={comboboxRef}>
-              <label className="block text-sm font-medium text-gray-700">인기 서비스 검색</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">인기 서비스 검색</label>
 
               {selectedService ? (
-                <div className="flex items-center gap-2 px-3 py-2 border border-indigo-400 bg-indigo-50 rounded-lg">
+                <div className="flex items-center gap-2 px-3 py-2 border border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
                   <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: selectedService.color }} />
-                  <span className="text-sm font-medium text-indigo-800 flex-1">{selectedService.name}</span>
-                  <span className="text-xs text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full">{selectedService.category}</span>
+                  <span className="text-sm font-medium text-indigo-800 dark:text-indigo-300 flex-1">{selectedService.name}</span>
+                  <span className="text-xs text-indigo-500 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-0.5 rounded-full">{selectedService.category}</span>
                   <button type="button" onClick={handleClearService} className="text-indigo-400 hover:text-indigo-600 ml-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -169,17 +169,17 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                     placeholder="Netflix, Spotify..."
                   />
                   {showDropdown && (
-                    <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    <ul className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                       {filtered.length > 0 ? (
                         filtered.map((service) => (
                           <li key={service.id}>
                             <button
                               type="button"
                               onMouseDown={() => handleServiceSelect(service)}
-                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                               <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: service.color }} />
-                              <span className="text-sm text-gray-800 flex-1">{service.name}</span>
+                              <span className="text-sm text-gray-800 dark:text-gray-200 flex-1">{service.name}</span>
                               <span className="text-xs text-gray-400">{service.category}</span>
                             </button>
                           </li>
@@ -197,7 +197,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             {/* 서비스명 */}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">서비스명 *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">서비스명 *</label>
               <Input
                 type="text"
                 placeholder="위에서 선택하거나 직접 입력하세요"
@@ -210,7 +210,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 금액 + 결제 주기 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">금액 (원) *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">금액 (원) *</label>
                 <Input
                   type="number"
                   min="0"
@@ -224,7 +224,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 )}
               </div>
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">결제 주기 *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">결제 주기 *</label>
                 <select {...register('billing_cycle')} className={selectClass(!!errors.billing_cycle)}>
                   <option value="monthly">매월</option>
                   <option value="yearly">매년</option>
@@ -234,7 +234,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
 
             {/* 결제수단 */}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">결제수단 *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">결제수단 *</label>
               <select {...register('payment_method_id')} className={selectClass(!!errors.payment_method_id)}>
                 <option value="">선택해주세요</option>
                 {paymentMethods.map((m) => (
@@ -252,7 +252,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 결제일 + 카테고리 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {watchedCycle === 'yearly' ? '결제 월 / 일 *' : '결제일 *'}
                 </label>
                 {watchedCycle === 'yearly' ? (
@@ -286,7 +286,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 {errors.billing_date && <p className="text-xs text-red-500">{errors.billing_date.message}</p>}
               </div>
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">카테고리</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">카테고리</label>
                 <select {...register('category')} className={selectClass(false)}>
                   <option value="">선택 안 함</option>
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -296,7 +296,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
 
             {/* 인원수 */}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">인원수</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">인원수</label>
               <Input
                 type="number"
                 min="1"
@@ -311,7 +311,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
 
             {/* 색상 */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">색상</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">색상</label>
               <div className="flex gap-2 items-center">
                 {COLORS.map((c) => (
                   <button
@@ -333,7 +333,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
 
             {/* 홈페이지 URL */}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">홈페이지 URL</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">홈페이지 URL</label>
               <Input
                 type="url"
                 placeholder="https://example.com"
@@ -345,7 +345,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
 
             {/* 메모 */}
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">메모</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">메모</label>
               <Textarea
                 rows={2}
                 placeholder="추가 메모"

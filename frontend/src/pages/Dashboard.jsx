@@ -17,7 +17,8 @@ import DdayBadge from '../components/ui/DdayBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
-import { PlusIcon, SearchIcon } from 'lucide-react'
+import { PlusIcon, SearchIcon, SunIcon, MoonIcon } from 'lucide-react'
+import useThemeStore from '../stores/themeStore'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
 
@@ -28,9 +29,9 @@ const CHART_COLORS = [
 
 const STATUS_LABELS = { active: '활성', paused: '일시정지', cancelled: '해지' }
 const STATUS_STYLES = {
-  active:    'text-green-600 bg-green-50',
-  paused:    'text-amber-600 bg-amber-50',
-  cancelled: 'text-gray-400 bg-gray-100',
+  active:    'text-green-600 bg-green-50 dark:bg-green-900/20',
+  paused:    'text-amber-600 bg-amber-50 dark:bg-amber-900/20',
+  cancelled: 'text-gray-400 bg-gray-100 dark:bg-gray-700',
 }
 
 const FILTER_TABS = [
@@ -53,16 +54,16 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
     : null
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-2 ${subscription.status === 'cancelled' ? 'opacity-60' : ''}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-2 ${subscription.status === 'cancelled' ? 'opacity-60' : ''}`}>
       {/* 1행: 색상 점 + 서비스명/상태 + 금액 */}
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 rounded-xl flex-shrink-0 mt-0.5" style={{ backgroundColor: subscription.color || '#6366f1' }} />
         <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-semibold text-gray-900 truncate">{subscription.name}</p>
+            <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{subscription.name}</p>
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-bold text-gray-900 text-sm">{formatPrice(subscription.price)}</p>
+            <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{formatPrice(subscription.price)}</p>
             <p className="text-xs text-gray-400">{isYearly ? '/ 년' : '/ 월'}</p>
             {perPerson && (
               <p className="text-xs text-indigo-400">1인 {formatPrice(perPerson)}</p>
@@ -75,7 +76,7 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           {subscription.category && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{subscription.category}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">{subscription.category}</span>
           )}
           <span className="text-xs text-gray-400">
             {isYearly && subscription.billing_month
@@ -91,7 +92,7 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
             value={subscription.status}
             onChange={(e) => onStatusChange(subscription.id, e.target.value)}
             title="구독 상태 변경"
-            className="text-xs border border-gray-200 rounded-lg pl-1.5 pr-7 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="text-xs border border-gray-200 dark:border-gray-600 rounded-lg pl-1.5 pr-7 py-1 text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
           >
             <option value="active">활성</option>
             <option value="paused">일시정지</option>
@@ -134,6 +135,7 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
 
 export default function Dashboard() {
   const { logout } = useAuth()
+  const { theme, toggleTheme } = useThemeStore()
   const [statusFilter, setStatusFilter] = useState(undefined)
   const { data, isLoading } = useSubscriptions(statusFilter)
   const { data: paymentMethods = [] } = usePaymentMethods()
@@ -182,19 +184,26 @@ export default function Dashboard() {
   const handleStatusChange = (id, status) => statusMutation.mutate({ id, status })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* 내비게이션 */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-900 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-indigo-600 rounded-lg" />
-            <span className="text-lg font-bold text-gray-900">SubManager</span>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">SubManager</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/mypage" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? '라이트 모드' : '다크 모드'}
+              className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              {theme === 'dark' ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
+            </button>
+            <Link to="/mypage" className="text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
               마이페이지
             </Link>
-            <button onClick={logout} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+            <button onClick={logout} className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
               로그아웃
             </button>
           </div>
@@ -215,7 +224,7 @@ export default function Dashboard() {
         {/* 좌측: 구독 목록 */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">구독 목록</h2>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">구독 목록</h2>
             <Button onClick={handleAdd} size="sm">
               <PlusIcon className="w-4 h-4 mr-1" />
               추가
@@ -237,7 +246,7 @@ export default function Dashboard() {
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value)}
-              className="text-sm border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg pl-3 pr-8 py-1.5 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             >
               <option value="billing_date">결제일순</option>
               <option value="price">금액높은순</option>
@@ -256,7 +265,7 @@ export default function Dashboard() {
                   className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                     isActive
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   {c}
@@ -268,7 +277,7 @@ export default function Dashboard() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="text-sm border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-auto"
+              className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg pl-3 pr-8 py-1.5 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-auto"
             >
               <option value="">전체 카테고리</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -284,7 +293,7 @@ export default function Dashboard() {
                 className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   statusFilter === tab.value
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                    : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 {tab.label}
@@ -298,7 +307,7 @@ export default function Dashboard() {
           ) : subscriptions.length === 0 && !statusFilter ? (
             <EmptyState onAdd={handleAdd} />
           ) : displayed.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
+            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
               <p className="text-gray-400 text-sm">검색 결과가 없습니다.</p>
             </div>
           ) : (
@@ -324,8 +333,8 @@ export default function Dashboard() {
             <>
               {/* 카테고리별 지출 */}
               {breakdown.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                  <h2 className="text-sm font-semibold text-gray-900 mb-4">카테고리별 지출</h2>
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">카테고리별 지출</h2>
                   <div className="flex flex-col items-center gap-4">
                     <ResponsiveContainer width="100%" height={160}>
                       <PieChart>
@@ -342,9 +351,9 @@ export default function Dashboard() {
                         <li key={item.name} className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-1.5">
                             <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
-                            <span className="text-gray-700">{item.name}</span>
+                            <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
                           </div>
-                          <span className="font-medium text-gray-900">{item.monthly_cost.toLocaleString('ko-KR')}원</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{item.monthly_cost.toLocaleString('ko-KR')}원</span>
                         </li>
                       ))}
                     </ul>
@@ -355,17 +364,17 @@ export default function Dashboard() {
               {/* 결제수단별 현황 */}
               {paymentSummary.length > 0 && (
                 <div className="space-y-2">
-                  <h2 className="text-sm font-semibold text-gray-900">결제수단별 현황</h2>
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">결제수단별 현황</h2>
                   {paymentSummary.map((m) => (
-                    <div key={m.id} className="bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex items-center justify-between">
+                    <div key={m.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm px-4 py-3 flex items-center justify-between">
                       <div>
-                        <span className="text-xs font-medium text-gray-500">{TYPE_LABELS[m.type]}</span>
-                        <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{TYPE_LABELS[m.type]}</span>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
                           {m.name}{m.last4 ? ` (${m.last4})` : ''}
                         </p>
                         <p className="text-xs text-gray-400">{m.count}개 구독</p>
                       </div>
-                      <p className="text-base font-bold text-gray-900">
+                      <p className="text-base font-bold text-gray-900 dark:text-gray-100">
                         {formatPrice(m.total)}<span className="text-xs font-normal text-gray-400">/월</span>
                       </p>
                     </div>

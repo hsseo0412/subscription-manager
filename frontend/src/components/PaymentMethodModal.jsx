@@ -81,15 +81,15 @@ export default function PaymentMethodModal({ isOpen, onClose, editTarget }) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1" noValidate>
           {/* 유형 선택 */}
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">유형 *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">유형 *</label>
             <div className="grid grid-cols-4 gap-2">
               {Object.entries(TYPE_LABELS).map(([value, label]) => (
                 <label
                   key={value}
                   className={`flex items-center justify-center py-2 rounded-lg border text-sm font-medium cursor-pointer transition-all ${
                     selectedType === value
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
                   <input type="radio" value={value} {...register('type')} className="sr-only" />
@@ -102,7 +102,7 @@ export default function PaymentMethodModal({ isOpen, onClose, editTarget }) {
 
           {/* 이름 */}
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               {selectedType === 'card' ? '카드사명 *' : selectedType === 'transfer' ? '은행명 *' : '이름 *'}
             </label>
             <Input
@@ -117,7 +117,7 @@ export default function PaymentMethodModal({ isOpen, onClose, editTarget }) {
           {/* 카드 뒷 4자리 */}
           {selectedType === 'card' && (
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">카드 뒷 4자리 *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">카드 뒷 4자리 *</label>
               <Input
                 type="text"
                 maxLength={4}

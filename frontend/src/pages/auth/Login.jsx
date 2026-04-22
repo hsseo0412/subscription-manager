@@ -37,8 +37,8 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-950 dark:to-gray-900 px-4">
+      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-8 space-y-6">
 
         {/* 헤더 */}
         <div className="text-center space-y-1">
@@ -47,14 +47,14 @@ export default function Login() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">다시 돌아오셨군요</h1>
-          <p className="text-sm text-gray-500">구독 관리를 시작하세요</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">다시 돌아오셨군요</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">구독 관리를 시작하세요</p>
         </div>
 
         {/* Google 로그인 (UI only) */}
         <button
           type="button"
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -67,9 +67,9 @@ export default function Login() {
 
         {/* 구분선 */}
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400">또는</span>
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+          <span className="text-xs text-gray-400 dark:text-gray-500">또는</span>
+          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
         </div>
 
         {/* 폼 */}
@@ -83,14 +83,14 @@ export default function Login() {
 
           {/* 이메일 */}
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700">이메일</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">이메일</label>
             <input
               type="email"
               autoComplete="email"
               placeholder="name@example.com"
               {...register('email')}
-              className={`block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-                errors.email ? 'border-red-400 bg-red-50' : 'border-gray-300'
+              className={`block w-full rounded-lg border px-3 py-2.5 text-sm shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition dark:text-gray-100 ${
+                errors.email ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-800'
               }`}
             />
             {errors.email && (
@@ -101,7 +101,7 @@ export default function Login() {
           {/* 비밀번호 */}
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="block text-sm font-medium text-gray-700">비밀번호</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">비밀번호</label>
               <button
                 type="button"
                 title="준비 중인 기능입니다"
@@ -116,8 +116,8 @@ export default function Login() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 {...register('password')}
-                className={`block w-full rounded-lg border px-3 py-2.5 pr-10 text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-                  errors.password ? 'border-red-400 bg-red-50' : 'border-gray-300'
+                className={`block w-full rounded-lg border px-3 py-2.5 pr-10 text-sm shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition dark:text-gray-100 ${
+                  errors.password ? 'border-red-400 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600 dark:bg-gray-800'
                 }`}
               />
               <button
@@ -160,7 +160,7 @@ export default function Login() {
         </form>
 
         {/* 하단 링크 */}
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
           계정이 없으신가요?{' '}
           <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
             회원가입

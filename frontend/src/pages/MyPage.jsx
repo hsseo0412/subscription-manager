@@ -21,7 +21,10 @@ import {
   MoreHorizontalIcon,
   PencilIcon,
   Trash2Icon,
+  SunIcon,
+  MoonIcon,
 } from 'lucide-react'
+import useThemeStore from '../stores/themeStore'
 
 const profileSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요.'),
@@ -54,6 +57,7 @@ function PaymentTypeIcon({ type }) {
 
 export default function MyPage() {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useThemeStore()
   const { data: paymentMethods = [] } = usePaymentMethods()
   const deleteMutation = useDeletePaymentMethod()
 
@@ -115,50 +119,59 @@ export default function MyPage() {
   const initials = user?.name ? user.name[0].toUpperCase() : '?'
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* 내비게이션 */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-900 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Link
               to="/dashboard"
-              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               <ChevronLeftIcon className="w-5 h-5" />
             </Link>
-            <h1 className="text-lg font-bold text-gray-900">마이 페이지</h1>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white">마이 페이지</h1>
           </div>
-          <button onClick={logout} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
-            로그아웃
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? '라이트 모드' : '다크 모드'}
+              className="p-1.5 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              {theme === 'dark' ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
+            </button>
+            <button onClick={logout} className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+              로그아웃
+            </button>
+          </div>
         </div>
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 pt-8 pb-16 space-y-5">
 
         {/* 프로필 헤더 카드 */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-5">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
             <span className="text-2xl font-bold text-white">{initials}</span>
           </div>
           <div className="min-w-0">
-            <p className="text-lg font-bold text-gray-900 truncate">{user?.name}</p>
-            <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white truncate">{user?.name}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
           </div>
         </div>
 
         {/* 프로필 수정 */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 space-y-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-              <UserIcon className="w-4 h-4 text-indigo-600" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+              <UserIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h2 className="text-base font-semibold text-gray-800">프로필 수정</h2>
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">프로필 수정</h2>
           </div>
 
           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-3" noValidate>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">이름</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">이름</label>
               <Input
                 type="text"
                 {...profileForm.register('name')}
@@ -169,12 +182,12 @@ export default function MyPage() {
               )}
             </div>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">이메일</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">이메일</label>
               <Input
                 type="email"
                 value={user?.email ?? ''}
                 disabled
-                className="bg-gray-50 text-gray-400 cursor-not-allowed"
+                className="bg-gray-50 dark:bg-gray-800 text-gray-400 cursor-not-allowed"
               />
               <p className="text-xs text-gray-400">이메일은 변경할 수 없습니다.</p>
             </div>
@@ -188,12 +201,12 @@ export default function MyPage() {
         </div>
 
         {/* 비밀번호 변경 */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 space-y-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-              <LockIcon className="w-4 h-4 text-indigo-600" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+              <LockIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h2 className="text-base font-semibold text-gray-800">비밀번호 변경</h2>
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">비밀번호 변경</h2>
           </div>
 
           <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-3" noValidate>
@@ -205,7 +218,7 @@ export default function MyPage() {
               const { onBlur: rhfOnBlur, ...rest } = passwordForm.register(name)
               return (
                 <div key={name} className="space-y-1">
-                  <label className="block text-sm font-medium text-gray-700">{label}</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
                   <Input
                     type="password"
                     {...rest}
@@ -240,13 +253,13 @@ export default function MyPage() {
         </div>
 
         {/* 결제수단 관리 */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                <CreditCardIcon className="w-4 h-4 text-indigo-600" />
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                <CreditCardIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <h2 className="text-base font-semibold text-gray-800">결제수단 관리</h2>
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">결제수단 관리</h2>
             </div>
             <Button size="sm" onClick={() => { setEditTarget(null); setPmModalOpen(true) }}>
               <PlusIcon className="w-3.5 h-3.5 mr-1" />
@@ -255,8 +268,8 @@ export default function MyPage() {
           </div>
 
           {paymentMethods.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
-              <CreditCardIcon className="mx-auto w-8 h-8 text-gray-300 mb-2" />
+            <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+              <CreditCardIcon className="mx-auto w-8 h-8 text-gray-300 dark:text-gray-600 mb-2" />
               <p className="text-sm text-gray-400">등록된 결제수단이 없습니다.</p>
             </div>
           ) : (
@@ -264,16 +277,16 @@ export default function MyPage() {
               {paymentMethods.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center gap-3 p-3.5 border border-gray-100 rounded-xl hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors"
+                  className="flex items-center gap-3 p-3.5 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-indigo-100 dark:hover:border-indigo-900 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-colors"
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${TYPE_ICON_BG[m.type]}`}>
                     <PaymentTypeIcon type={m.type} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
                       {m.name}{m.last4 ? ` (${m.last4})` : ''}
                     </p>
-                    <p className="text-xs text-gray-500">{TYPE_LABELS[m.type]}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{TYPE_LABELS[m.type]}</p>
                   </div>
                   <div className="flex gap-1">
                     <button

@@ -1,9 +1,11 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Dashboard from './pages/Dashboard'
 import MyPage from './pages/MyPage'
 import useAuthStore from './stores/authStore'
+import useThemeStore from './stores/themeStore'
 
 function PrivateRoute({ children }) {
   const user = useAuthStore((state) => state.user)
@@ -16,6 +18,13 @@ function GuestRoute({ children }) {
 }
 
 export default function App() {
+  const theme = useThemeStore((state) => state.theme)
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
   return (
     <Routes>
       <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
