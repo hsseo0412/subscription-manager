@@ -3,6 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreatePaymentMethod, useUpdatePaymentMethod } from '../hooks/usePaymentMethods'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 const schema = z.object({
   type: z.enum(['card', 'transfer', 'cash', 'etc'], { required_error: '유형을 선택해주세요.' }),
@@ -63,31 +71,14 @@ export default function PaymentMethodModal({ isOpen, onClose, editTarget }) {
     }
   }
 
-  if (!isOpen) return null
-
-  const inputClass = (hasError) =>
-    `block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-      hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
-    }`
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 space-y-5">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? '결제수단 수정' : '결제수단 추가'}</DialogTitle>
+        </DialogHeader>
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">
-            {isEdit ? '결제수단 수정' : '결제수단 추가'}
-          </h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-1" noValidate>
           {/* 유형 선택 */}
           <div className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">유형 *</label>
@@ -114,11 +105,11 @@ export default function PaymentMethodModal({ isOpen, onClose, editTarget }) {
             <label className="block text-sm font-medium text-gray-700">
               {selectedType === 'card' ? '카드사명 *' : selectedType === 'transfer' ? '은행명 *' : '이름 *'}
             </label>
-            <input
+            <Input
               type="text"
               placeholder={selectedType === 'card' ? '현대카드' : selectedType === 'transfer' ? '카카오뱅크' : ''}
               {...register('name')}
-              className={inputClass(!!errors.name)}
+              className={errors.name ? 'border-red-400 bg-red-50' : ''}
             />
             {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
           </div>
@@ -127,35 +118,27 @@ export default function PaymentMethodModal({ isOpen, onClose, editTarget }) {
           {selectedType === 'card' && (
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">카드 뒷 4자리 *</label>
-              <input
+              <Input
                 type="text"
                 maxLength={4}
                 placeholder="1234"
                 {...register('last4')}
-                className={inputClass(!!errors.last4)}
+                className={errors.last4 ? 'border-red-400 bg-red-50' : ''}
               />
               {errors.last4 && <p className="text-xs text-red-500">{errors.last4.message}</p>}
             </div>
           )}
 
           <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               취소
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="flex-1">
               {isSubmitting ? '저장 중...' : isEdit ? '수정' : '추가'}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

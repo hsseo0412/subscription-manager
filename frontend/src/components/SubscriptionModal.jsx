@@ -6,6 +6,15 @@ import { useCreateSubscription, useUpdateSubscription } from '../hooks/useSubscr
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import { POPULAR_SERVICES } from '../data/popularServices'
 import { SERVICE_WEBSITE_MAP } from '../data/popularServices'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
 
@@ -25,6 +34,11 @@ const schema = z.object({
 
 const CATEGORIES = ['동영상', '음악', '게임', '업무', '클라우드', '쇼핑', '기타']
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899']
+
+const selectClass = (hasError) =>
+  `block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
+    hasError ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'
+  }`
 
 export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
   const isEdit = !!editTarget
@@ -65,7 +79,6 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     }
   }, [isOpen, editTarget, reset])
 
-  // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
@@ -99,8 +112,8 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     setValue('website', '')
   }
 
-  const selectedColor   = watch('color')
-  const watchedCycle    = watch('billing_cycle')
+  const selectedColor  = watch('color')
+  const watchedCycle   = watch('billing_cycle')
   const watchedPrice   = watch('price') || 0
   const watchedMembers = watch('members') || 1
 
@@ -122,30 +135,14 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     }
   }
 
-  if (!isOpen) return null
-
-  const inputClass = (hasError) =>
-    `block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-      hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
-    }`
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 space-y-5">
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? '구독 수정' : '구독 추가'}</DialogTitle>
+        </DialogHeader>
 
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">
-              {isEdit ? '구독 수정' : '구독 추가'}
-            </h2>
-            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
+        <div className="space-y-5">
           {/* 인기 서비스 검색 — 등록 모드만 */}
           {!isEdit && (
             <div className="space-y-1" ref={comboboxRef}>
@@ -156,11 +153,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                   <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: selectedService.color }} />
                   <span className="text-sm font-medium text-indigo-800 flex-1">{selectedService.name}</span>
                   <span className="text-xs text-indigo-500 bg-indigo-100 px-2 py-0.5 rounded-full">{selectedService.category}</span>
-                  <button
-                    type="button"
-                    onClick={handleClearService}
-                    className="text-indigo-400 hover:text-indigo-600 ml-1"
-                  >
+                  <button type="button" onClick={handleClearService} className="text-indigo-400 hover:text-indigo-600 ml-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -168,15 +161,13 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 </div>
               ) : (
                 <div className="relative">
-                  <input
+                  <Input
                     type="text"
                     value={search}
                     onChange={(e) => { setSearch(e.target.value); setShowDropdown(true) }}
                     onFocus={() => setShowDropdown(true)}
                     placeholder="Netflix, Spotify..."
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                   />
-
                   {showDropdown && (
                     <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                       {filtered.length > 0 ? (
@@ -204,11 +195,15 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-
             {/* 서비스명 */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">서비스명 *</label>
-              <input type="text" placeholder="위에서 선택하거나 직접 입력하세요" {...register('name')} className={inputClass(!!errors.name)} />
+              <Input
+                type="text"
+                placeholder="위에서 선택하거나 직접 입력하세요"
+                {...register('name')}
+                className={errors.name ? 'border-red-400 bg-red-50' : ''}
+              />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
@@ -216,7 +211,13 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">금액 (원) *</label>
-                <input type="number" min="0" placeholder="17000" {...register('price')} className={inputClass(!!errors.price)} />
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="17000"
+                  {...register('price')}
+                  className={errors.price ? 'border-red-400 bg-red-50' : ''}
+                />
                 {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
                 {watchedMembers > 1 && watchedPrice > 0 && (
                   <p className="text-xs text-indigo-500">1인 부담: {Math.round(watchedPrice / watchedMembers).toLocaleString('ko-KR')}원</p>
@@ -224,7 +225,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
               </div>
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">결제 주기 *</label>
-                <select {...register('billing_cycle')} className={inputClass(!!errors.billing_cycle)}>
+                <select {...register('billing_cycle')} className={selectClass(!!errors.billing_cycle)}>
                   <option value="monthly">매월</option>
                   <option value="yearly">매년</option>
                 </select>
@@ -234,7 +235,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 결제수단 */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">결제수단 *</label>
-              <select {...register('payment_method_id')} className={inputClass(!!errors.payment_method_id)}>
+              <select {...register('payment_method_id')} className={selectClass(!!errors.payment_method_id)}>
                 <option value="">선택해주세요</option>
                 {paymentMethods.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -256,23 +257,37 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 </label>
                 {watchedCycle === 'yearly' ? (
                   <div className="flex gap-1.5">
-                    <select {...register('billing_month')} className={inputClass(!!errors.billing_month)}>
+                    <select {...register('billing_month')} className={selectClass(!!errors.billing_month)}>
                       <option value="">월</option>
                       {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                         <option key={m} value={m}>{m}월</option>
                       ))}
                     </select>
-                    <input type="number" min="1" max="31" placeholder="일" {...register('billing_date')} className={inputClass(!!errors.billing_date) + ' w-16'} />
+                    <Input
+                      type="number"
+                      min="1"
+                      max="31"
+                      placeholder="일"
+                      {...register('billing_date')}
+                      className={`w-16 ${errors.billing_date ? 'border-red-400 bg-red-50' : ''}`}
+                    />
                   </div>
                 ) : (
-                  <input type="number" min="1" max="31" placeholder="1" {...register('billing_date')} className={inputClass(!!errors.billing_date)} />
+                  <Input
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="1"
+                    {...register('billing_date')}
+                    className={errors.billing_date ? 'border-red-400 bg-red-50' : ''}
+                  />
                 )}
                 {errors.billing_month && <p className="text-xs text-red-500">{errors.billing_month.message}</p>}
                 {errors.billing_date && <p className="text-xs text-red-500">{errors.billing_date.message}</p>}
               </div>
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">카테고리</label>
-                <select {...register('category')} className={inputClass(false)}>
+                <select {...register('category')} className={selectClass(false)}>
                   <option value="">선택 안 함</option>
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -282,13 +297,13 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 인원수 */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">인원수</label>
-              <input
+              <Input
                 type="number"
                 min="1"
                 max="99"
                 placeholder="1"
                 {...register('members')}
-                className={inputClass(!!errors.members)}
+                className={errors.members ? 'border-red-400 bg-red-50' : ''}
               />
               {errors.members && <p className="text-xs text-red-500">{errors.members.message}</p>}
               <p className="text-xs text-gray-400">여러 명이 나눠서 결제할 경우 입력하세요.</p>
@@ -307,7 +322,6 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                     style={{ backgroundColor: c }}
                   />
                 ))}
-                {/* 서비스 고유 색상이 팔레트에 없을 때 */}
                 {selectedColor && !COLORS.includes(selectedColor) && (
                   <span
                     className="w-7 h-7 rounded-full ring-2 ring-offset-2 ring-gray-400 scale-110 inline-block"
@@ -320,36 +334,38 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 홈페이지 URL */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">홈페이지 URL</label>
-              <input type="url" placeholder="https://example.com" {...register('website')} className={inputClass(!!errors.website)} />
+              <Input
+                type="url"
+                placeholder="https://example.com"
+                {...register('website')}
+                className={errors.website ? 'border-red-400 bg-red-50' : ''}
+              />
               {errors.website && <p className="text-xs text-red-500">{errors.website.message}</p>}
             </div>
 
             {/* 메모 */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">메모</label>
-              <textarea rows={2} placeholder="추가 메모" {...register('memo')} className={inputClass(false) + ' resize-none'} />
+              <Textarea
+                rows={2}
+                placeholder="추가 메모"
+                {...register('memo')}
+                className="resize-none"
+              />
             </div>
 
             {/* 버튼 */}
             <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
+              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
                 취소
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
-              >
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? '저장 중...' : isEdit ? '수정' : '추가'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

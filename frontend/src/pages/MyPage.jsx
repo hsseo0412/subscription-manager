@@ -8,6 +8,20 @@ import { useAuth } from '../hooks/useAuth'
 import useAuthStore from '../stores/authStore'
 import { usePaymentMethods, useDeletePaymentMethod } from '../hooks/usePaymentMethods'
 import PaymentMethodModal from '../components/PaymentMethodModal'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import {
+  PlusIcon,
+  ChevronLeftIcon,
+  UserIcon,
+  LockIcon,
+  CreditCardIcon,
+  LandmarkIcon,
+  WalletIcon,
+  MoreHorizontalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from 'lucide-react'
 
 const profileSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요.'),
@@ -23,7 +37,20 @@ const passwordSchema = z.object({
 })
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
-const TYPE_COLORS = { card: 'bg-blue-100 text-blue-700', transfer: 'bg-green-100 text-green-700', cash: 'bg-yellow-100 text-yellow-700', etc: 'bg-gray-100 text-gray-600' }
+const TYPE_ICON_BG = {
+  card:     'bg-blue-50 text-blue-600',
+  transfer: 'bg-green-50 text-green-600',
+  cash:     'bg-yellow-50 text-yellow-600',
+  etc:      'bg-gray-100 text-gray-500',
+}
+
+function PaymentTypeIcon({ type }) {
+  const cls = 'w-4 h-4'
+  if (type === 'card')     return <CreditCardIcon className={cls} />
+  if (type === 'transfer') return <LandmarkIcon className={cls} />
+  if (type === 'cash')     return <WalletIcon className={cls} />
+  return <MoreHorizontalIcon className={cls} />
+}
 
 export default function MyPage() {
   const { user, logout } = useAuth()
@@ -85,13 +112,11 @@ export default function MyPage() {
     await deleteMutation.mutateAsync(id)
   }
 
-  const inputClass = (hasError) =>
-    `block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition ${
-      hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'
-    }`
+  const initials = user?.name ? user.name[0].toUpperCase() : '?'
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 내비게이션 */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -99,9 +124,7 @@ export default function MyPage() {
               to="/dashboard"
               className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeftIcon className="w-5 h-5" />
             </Link>
             <h1 className="text-lg font-bold text-gray-900">마이 페이지</h1>
           </div>
@@ -111,43 +134,68 @@ export default function MyPage() {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-4 pt-8 pb-16 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 pt-8 pb-16 space-y-5">
+
+        {/* 프로필 헤더 카드 */}
+        <div className="bg-white rounded-2xl shadow-sm p-6 flex items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
+            <span className="text-2xl font-bold text-white">{initials}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-lg font-bold text-gray-900 truncate">{user?.name}</p>
+            <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+          </div>
+        </div>
 
         {/* 프로필 수정 */}
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          <h2 className="text-base font-semibold text-gray-800">프로필 수정</h2>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <UserIcon className="w-4 h-4 text-indigo-600" />
+            </div>
+            <h2 className="text-base font-semibold text-gray-800">프로필 수정</h2>
+          </div>
+
           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-3" noValidate>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">이름</label>
-              <input type="text" {...profileForm.register('name')} className={inputClass(!!profileForm.formState.errors.name)} />
-              {profileForm.formState.errors.name && <p className="text-xs text-red-500">{profileForm.formState.errors.name.message}</p>}
+              <Input
+                type="text"
+                {...profileForm.register('name')}
+                className={profileForm.formState.errors.name ? 'border-red-400 bg-red-50' : ''}
+              />
+              {profileForm.formState.errors.name && (
+                <p className="text-xs text-red-500">{profileForm.formState.errors.name.message}</p>
+              )}
             </div>
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">이메일</label>
-              <input
+              <Input
                 type="email"
                 value={user?.email ?? ''}
                 disabled
-                className="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+                className="bg-gray-50 text-gray-400 cursor-not-allowed"
               />
               <p className="text-xs text-gray-400">이메일은 변경할 수 없습니다.</p>
             </div>
             {profileMsg && (
               <p className={`text-sm ${profileMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{profileMsg.text}</p>
             )}
-            <button
-              type="submit"
-              disabled={profileForm.formState.isSubmitting}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
+            <Button type="submit" disabled={profileForm.formState.isSubmitting} className="w-full">
               {profileForm.formState.isSubmitting ? '저장 중...' : '저장'}
-            </button>
+            </Button>
           </form>
         </div>
 
         {/* 비밀번호 변경 */}
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
-          <h2 className="text-base font-semibold text-gray-800">비밀번호 변경</h2>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <LockIcon className="w-4 h-4 text-indigo-600" />
+            </div>
+            <h2 className="text-base font-semibold text-gray-800">비밀번호 변경</h2>
+          </div>
+
           <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-3" noValidate>
             {[
               { name: 'current_password', label: '현재 비밀번호' },
@@ -158,7 +206,7 @@ export default function MyPage() {
               return (
                 <div key={name} className="space-y-1">
                   <label className="block text-sm font-medium text-gray-700">{label}</label>
-                  <input
+                  <Input
                     type="password"
                     {...rest}
                     onBlur={async (e) => {
@@ -174,70 +222,80 @@ export default function MyPage() {
                         }
                       }
                     }}
-                    className={inputClass(!!passwordForm.formState.errors[name])}
+                    className={passwordForm.formState.errors[name] ? 'border-red-400 bg-red-50' : ''}
                   />
-                  {passwordForm.formState.errors[name] && <p className="text-xs text-red-500">{passwordForm.formState.errors[name].message}</p>}
+                  {passwordForm.formState.errors[name] && (
+                    <p className="text-xs text-red-500">{passwordForm.formState.errors[name].message}</p>
+                  )}
                 </div>
               )
             })}
             {passwordMsg && (
               <p className={`text-sm ${passwordMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{passwordMsg.text}</p>
             )}
-            <button
-              type="submit"
-              disabled={passwordForm.formState.isSubmitting}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
+            <Button type="submit" disabled={passwordForm.formState.isSubmitting} className="w-full">
               {passwordForm.formState.isSubmitting ? '변경 중...' : '비밀번호 변경'}
-            </button>
+            </Button>
           </form>
         </div>
 
         {/* 결제수단 관리 */}
         <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-800">결제수단 관리</h2>
-            <button
-              onClick={() => { setEditTarget(null); setPmModalOpen(true) }}
-              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                <CreditCardIcon className="w-4 h-4 text-indigo-600" />
+              </div>
+              <h2 className="text-base font-semibold text-gray-800">결제수단 관리</h2>
+            </div>
+            <Button size="sm" onClick={() => { setEditTarget(null); setPmModalOpen(true) }}>
+              <PlusIcon className="w-3.5 h-3.5 mr-1" />
               추가
-            </button>
+            </Button>
           </div>
 
           {paymentMethods.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">등록된 결제수단이 없습니다.</p>
+            <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+              <CreditCardIcon className="mx-auto w-8 h-8 text-gray-300 mb-2" />
+              <p className="text-sm text-gray-400">등록된 결제수단이 없습니다.</p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {paymentMethods.map((m) => (
-                <li key={m.id} className="flex items-center gap-3 px-4 py-3 border border-gray-100 rounded-xl">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TYPE_COLORS[m.type]}`}>
-                    {TYPE_LABELS[m.type]}
-                  </span>
-                  <span className="text-sm text-gray-800 flex-1">
-                    {m.name}{m.last4 ? ` (${m.last4})` : ''}
-                  </span>
-                  <button
-                    onClick={() => { setEditTarget(m); setPmModalOpen(true) }}
-                    className="text-xs text-gray-400 hover:text-indigo-600 transition-colors"
-                  >
-                    수정
-                  </button>
-                  <button
-                    onClick={() => handleDeletePaymentMethod(m.id)}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    삭제
-                  </button>
+                <li
+                  key={m.id}
+                  className="flex items-center gap-3 p-3.5 border border-gray-100 rounded-xl hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors"
+                >
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${TYPE_ICON_BG[m.type]}`}>
+                    <PaymentTypeIcon type={m.type} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {m.name}{m.last4 ? ` (${m.last4})` : ''}
+                    </p>
+                    <p className="text-xs text-gray-500">{TYPE_LABELS[m.type]}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => { setEditTarget(m); setPmModalOpen(true) }}
+                      title="수정"
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                    >
+                      <PencilIcon className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeletePaymentMethod(m.id)}
+                      title="삭제"
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2Icon className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
-
       </div>
 
       <PaymentMethodModal
