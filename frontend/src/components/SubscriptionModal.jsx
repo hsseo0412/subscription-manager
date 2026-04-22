@@ -17,6 +17,7 @@ const schema = z.object({
   category:          z.string().max(50).optional().or(z.literal('')),
   color:             z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
   memo:              z.string().optional().or(z.literal('')),
+  members:           z.coerce.number().int().min(1, '인원수는 1명 이상이어야 합니다.').max(99).default(1),
 })
 
 const CATEGORIES = ['동영상', '음악', '게임', '업무', '클라우드', '쇼핑', '기타']
@@ -44,7 +45,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { billing_cycle: 'monthly', billing_date: 1, color: '#6366f1' },
+    defaultValues: { billing_cycle: 'monthly', billing_date: 1, color: '#6366f1', members: 1 },
   })
 
   useEffect(() => {
@@ -55,7 +56,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
       reset(
         editTarget ?? {
           name: '', price: '', billing_cycle: 'monthly',
-          billing_date: 1, category: '', color: '#6366f1', memo: '',
+          billing_date: 1, category: '', color: '#6366f1', memo: '', members: 1,
         }
       )
     }
@@ -94,6 +95,8 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
   }
 
   const selectedColor = watch('color')
+  const watchedPrice   = watch('price') || 0
+  const watchedMembers = watch('members') || 1
 
   const onSubmit = async (data) => {
     try {
@@ -199,7 +202,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 서비스명 */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">서비스명 *</label>
-              <input type="text" placeholder="Netflix" {...register('name')} className={inputClass(!!errors.name)} />
+              <input type="text" placeholder="위에서 선택하거나 직접 입력하세요" {...register('name')} className={inputClass(!!errors.name)} />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
@@ -209,6 +212,9 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 <label className="block text-sm font-medium text-gray-700">금액 (원) *</label>
                 <input type="number" min="0" placeholder="17000" {...register('price')} className={inputClass(!!errors.price)} />
                 {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
+                {watchedMembers > 1 && watchedPrice > 0 && (
+                  <p className="text-xs text-indigo-500">1인 부담: {Math.round(watchedPrice / watchedMembers).toLocaleString('ko-KR')}원</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">결제 주기 *</label>
@@ -250,6 +256,21 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                   {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
+            </div>
+
+            {/* 인원수 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">인원수</label>
+              <input
+                type="number"
+                min="1"
+                max="99"
+                placeholder="1"
+                {...register('members')}
+                className={inputClass(!!errors.members)}
+              />
+              {errors.members && <p className="text-xs text-red-500">{errors.members.message}</p>}
+              <p className="text-xs text-gray-400">여러 명이 나눠서 결제할 경우 입력하세요.</p>
             </div>
 
             {/* 색상 */}

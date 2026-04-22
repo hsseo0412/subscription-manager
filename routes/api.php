@@ -24,6 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('user/profile', [ProfileController::class, 'update']);
     Route::delete('user', [ProfileController::class, 'destroy']);
 
+    Route::get('subscriptions/stats', [SubscriptionController::class, 'stats']);
+    Route::patch('subscriptions/{subscription}/status', [SubscriptionController::class, 'updateStatus']);
     Route::apiResource('subscriptions', SubscriptionController::class)->only([
         'index', 'store', 'update', 'destroy',
     ]);

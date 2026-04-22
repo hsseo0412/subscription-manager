@@ -17,11 +17,15 @@ class Subscription extends Model
         'color',
         'memo',
         'payment_method_id',
+        'status',
+        'members',
     ];
 
     protected $casts = [
-        'price' => 'integer',
+        'price'        => 'integer',
         'billing_date' => 'integer',
+        'members'      => 'integer',
+        'status'       => 'string',
     ];
 
     public function user(): BelongsTo

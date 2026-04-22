@@ -1,30 +1,65 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { useSubscriptions, useDeleteSubscription } from '../hooks/useSubscriptions'
+import {
+  useSubscriptions,
+  useDeleteSubscription,
+  useUpdateSubscriptionStatus,
+} from '../hooks/useSubscriptions'
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import SubscriptionModal from '../components/SubscriptionModal'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
 
+const STATUS_LABELS = { active: '활성', paused: '일시정지', cancelled: '해지' }
+const STATUS_STYLES = {
+  active:    'text-green-600 bg-green-50',
+  paused:    'text-amber-600 bg-amber-50',
+  cancelled: 'text-gray-400 bg-gray-100',
+}
+
+const FILTER_TABS = [
+  { value: undefined, label: '전체' },
+  { value: 'active',    label: '활성' },
+  { value: 'paused',    label: '일시정지' },
+  { value: 'cancelled', label: '해지' },
+]
+
 function formatPrice(price) {
   return price.toLocaleString('ko-KR') + '원'
 }
 
-function SubscriptionCard({ subscription, onEdit, onDelete }) {
-  const isYearly = subscription.billing_cycle === 'yearly'
+function DdayBadge({ days }) {
+  if (days === 0) return <span className="text-xs font-medium px-1.5 py-0.5 rounded-full text-red-500 bg-red-50">오늘</span>
+  if (days <= 3)  return <span className="text-xs font-medium px-1.5 py-0.5 rounded-full text-orange-500 bg-orange-50">D-{days}</span>
+  return <span className="text-xs font-medium px-1.5 py-0.5 rounded-full text-gray-400 bg-gray-100">D-{days}</span>
+}
+
+function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
+  const isYearly     = subscription.billing_cycle === 'yearly'
+  const perPerson    = subscription.members > 1
+    ? Math.round((isYearly ? Math.round(subscription.price / 12) : subscription.price) / subscription.members)
+    : null
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between gap-4">
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-between gap-4 ${subscription.status === 'cancelled' ? 'opacity-60' : ''}`}>
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-10 h-10 rounded-xl flex-shrink-0" style={{ backgroundColor: subscription.color || '#6366f1' }} />
         <div className="min-w-0">
-          <p className="font-semibold text-gray-900 truncate">{subscription.name}</p>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-gray-900 truncate">{subscription.name}</p>
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_STYLES[subscription.status]}`}>
+              {STATUS_LABELS[subscription.status]}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             {subscription.category && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{subscription.category}</span>
             )}
             <span className="text-xs text-gray-400">매월 {subscription.billing_date}일</span>
+            {subscription.days_until_billing != null && subscription.status === 'active' && (
+              <DdayBadge days={subscription.days_until_billing} />
+            )}
           </div>
         </div>
       </div>
@@ -32,8 +67,20 @@ function SubscriptionCard({ subscription, onEdit, onDelete }) {
         <div className="text-right">
           <p className="font-bold text-gray-900">{formatPrice(subscription.price)}</p>
           <p className="text-xs text-gray-400">{isYearly ? '/ 년' : '/ 월'}</p>
+          {perPerson && (
+            <p className="text-xs text-indigo-400">1인 {formatPrice(perPerson)}</p>
+          )}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          <select
+            value={subscription.status}
+            onChange={(e) => onStatusChange(subscription.id, e.target.value)}
+            className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          >
+            <option value="active">활성</option>
+            <option value="paused">일시정지</option>
+            <option value="cancelled">해지</option>
+          </select>
           <button onClick={() => onEdit(subscription)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -52,29 +99,33 @@ function SubscriptionCard({ subscription, onEdit, onDelete }) {
 
 export default function Dashboard() {
   const { user, logout } = useAuth()
-  const { data, isLoading } = useSubscriptions()
+  const [statusFilter, setStatusFilter] = useState(undefined)
+  const { data, isLoading } = useSubscriptions(statusFilter)
   const { data: paymentMethods = [] } = usePaymentMethods()
   const deleteMutation = useDeleteSubscription()
+  const statusMutation = useUpdateSubscriptionStatus()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
 
-  const subscriptions = data?.subscriptions ?? []
-  const monthlyTotal = data?.monthly_total ?? 0
+  const subscriptions  = data?.subscriptions ?? []
+  const monthlyTotal   = data?.monthly_total ?? 0
 
-  // 결제수단별 구독 집계
+  // 결제수단별 집계 — active 구독만 포함
   const paymentSummary = paymentMethods.map((m) => {
-    const linked = subscriptions.filter((s) => s.payment_method_id === m.id)
-    const total = linked.reduce((sum, s) => {
-      return sum + (s.billing_cycle === 'yearly' ? Math.round(s.price / 12) : s.price)
+    const linked = subscriptions.filter((s) => s.payment_method_id === m.id && s.status === 'active')
+    const total  = linked.reduce((sum, s) => {
+      const base = s.billing_cycle === 'yearly' ? Math.round(s.price / 12) : s.price
+      return sum + Math.round(base / Math.max(1, s.members || 1))
     }, 0)
     return { ...m, count: linked.length, total }
   }).filter((m) => m.count > 0)
 
-  const handleEdit = (subscription) => { setEditTarget(subscription); setModalOpen(true) }
-  const handleAdd = () => { setEditTarget(null); setModalOpen(true) }
-  const handleDelete = (id) => { if (window.confirm('이 구독을 삭제하시겠습니까?')) deleteMutation.mutate(id) }
-  const handleModalClose = () => { setModalOpen(false); setEditTarget(null) }
+  const handleEdit        = (subscription) => { setEditTarget(subscription); setModalOpen(true) }
+  const handleAdd         = () => { setEditTarget(null); setModalOpen(true) }
+  const handleDelete      = (id) => { if (window.confirm('이 구독을 삭제하시겠습니까?')) deleteMutation.mutate(id) }
+  const handleModalClose  = () => { setModalOpen(false); setEditTarget(null) }
+  const handleStatusChange = (id, status) => statusMutation.mutate({ id, status })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -85,6 +136,9 @@ export default function Dashboard() {
             <span className="text-lg font-bold text-gray-900">SubManager</span>
           </div>
           <div className="flex items-center gap-4">
+            <Link to="/stats" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors">
+              통계
+            </Link>
             <Link to="/mypage" className="text-sm text-gray-600 hover:text-indigo-600 transition-colors">
               {user?.name}
             </Link>
@@ -104,9 +158,10 @@ export default function Dashboard() {
             <p className="text-3xl font-bold mt-1">{formatPrice(monthlyTotal)}</p>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <p className="text-sm text-gray-500">구독 서비스</p>
+            <p className="text-sm text-gray-500">활성 구독</p>
             <p className="text-3xl font-bold mt-1 text-gray-900">
-              {subscriptions.length}<span className="text-base font-normal text-gray-400 ml-1">개</span>
+              {subscriptions.filter((s) => s.status === 'active').length}
+              <span className="text-base font-normal text-gray-400 ml-1">개</span>
             </p>
           </div>
         </div>
@@ -147,19 +202,44 @@ export default function Dashboard() {
             </button>
           </div>
 
+          {/* 상태 필터 탭 */}
+          <div className="flex gap-1">
+            {FILTER_TABS.map((tab) => (
+              <button
+                key={tab.label}
+                onClick={() => setStatusFilter(tab.value)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  statusFilter === tab.value
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-500 border border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           {isLoading ? (
             <div className="text-center py-12 text-gray-400 text-sm">불러오는 중...</div>
           ) : subscriptions.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-xl border border-dashed border-gray-200">
               <p className="text-gray-400 text-sm">등록된 구독이 없습니다.</p>
-              <button onClick={handleAdd} className="mt-3 text-sm text-indigo-600 hover:underline">
-                첫 구독 추가하기
-              </button>
+              {!statusFilter && (
+                <button onClick={handleAdd} className="mt-3 text-sm text-indigo-600 hover:underline">
+                  첫 구독 추가하기
+                </button>
+              )}
             </div>
           ) : (
             <div className="space-y-2">
               {subscriptions.map((sub) => (
-                <SubscriptionCard key={sub.id} subscription={sub} onEdit={handleEdit} onDelete={handleDelete} />
+                <SubscriptionCard
+                  key={sub.id}
+                  subscription={sub}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onStatusChange={handleStatusChange}
+                />
               ))}
             </div>
           )}

@@ -9,15 +9,31 @@ class SubscriptionRepository
 {
     /**
      * user_id로 구독 목록 조회 (billing_date 오름차순)
+     * status 파라미터가 있으면 해당 상태만 필터링
+     *
+     * @param int         $userId
+     * @param string|null $status active|paused|cancelled
+     * @return Collection
+     */
+    public function findByUser(int $userId, ?string $status = null): Collection
+    {
+        return Subscription::where('user_id', $userId)
+            ->when($status !== null, fn($q) => $q->where('status', $status))
+            ->with('paymentMethod')
+            ->orderBy('billing_date')
+            ->get();
+    }
+
+    /**
+     * user_id로 활성(active) 구독만 조회 — 통계 전용
      *
      * @param int $userId
      * @return Collection
      */
-    public function findByUser(int $userId): Collection
+    public function findActiveByUser(int $userId): Collection
     {
         return Subscription::where('user_id', $userId)
-            ->with('paymentMethod')
-            ->orderBy('billing_date')
+            ->where('status', 'active')
             ->get();
     }
 
@@ -43,6 +59,18 @@ class SubscriptionRepository
     {
         $subscription->update($data);
         return $subscription->fresh();
+    }
+
+    /**
+     * 구독 상태 업데이트
+     *
+     * @param Subscription $subscription
+     * @param string       $status
+     * @return Subscription
+     */
+    public function updateStatus(Subscription $subscription, string $status): Subscription
+    {
+        return $this->update($subscription, ['status' => $status]);
     }
 
     /**

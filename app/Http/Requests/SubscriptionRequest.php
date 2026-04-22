@@ -22,6 +22,8 @@ class SubscriptionRequest extends FormRequest
             'color'         => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'memo'               => ['nullable', 'string', 'max:500'],
             'payment_method_id'  => ['required', 'integer', 'exists:payment_methods,id'],
+            'status'             => ['sometimes', 'in:active,paused,cancelled'],
+            'members'            => ['sometimes', 'integer', 'min:1', 'max:99'],
         ];
     }
 
@@ -42,6 +44,9 @@ class SubscriptionRequest extends FormRequest
             'memo.max'               => '메모는 500자 이하여야 합니다.',
             'payment_method_id.required' => '결제수단을 선택해주세요.',
             'payment_method_id.exists'   => '유효하지 않은 결제수단입니다.',
+            'status.in'              => '유효하지 않은 상태값입니다.',
+            'members.min'            => '인원수는 1명 이상이어야 합니다.',
+            'members.max'            => '인원수는 99명 이하여야 합니다.',
         ];
     }
 }
