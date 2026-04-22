@@ -93,24 +93,43 @@ class SubscriptionService
 
     /**
      * 결제일까지 남은 일수 계산 (0 = 오늘)
+     * yearly + billing_month 가 있으면 연간 결제일 기준으로 계산
      *
-     * @param int $billingDate 1~31
+     * @param int         $billingDate  1~31
+     * @param string      $cycle        monthly|yearly
+     * @param int|null    $billingMonth 1~12 (yearly 전용)
      * @return int
      */
-    public function calcDaysUntilBilling(int $billingDate): int
+    public function calcDaysUntilBilling(int $billingDate, string $cycle = 'monthly', ?int $billingMonth = null): int
     {
         $today = Carbon::today();
+
+        if ($cycle === 'yearly' && $billingMonth !== null) {
+            $year         = $today->year;
+            $daysInMonth  = Carbon::createFromDate($year, $billingMonth, 1)->daysInMonth;
+            $effectiveDay = min($billingDate, $daysInMonth);
+            $next         = Carbon::createFromDate($year, $billingMonth, $effectiveDay);
+
+            if ($next->lt($today)) {
+                $nextYear     = $year + 1;
+                $daysInMonth  = Carbon::createFromDate($nextYear, $billingMonth, 1)->daysInMonth;
+                $effectiveDay = min($billingDate, $daysInMonth);
+                $next         = Carbon::createFromDate($nextYear, $billingMonth, $effectiveDay);
+            }
+
+            return (int) $today->diffInDays($next);
+        }
+
+        // 월 결제 기존 로직
         $year  = $today->year;
         $month = $today->month;
 
-        // 이번 달 결제일 (말일 초과 시 해당 월 마지막 날로 조정)
         $daysInMonth  = $today->daysInMonth;
         $effectiveDay = min($billingDate, $daysInMonth);
 
         if ($effectiveDay >= $today->day) {
             $next = Carbon::createFromDate($year, $month, $effectiveDay);
         } else {
-            // 다음 달
             $nextMonth       = $today->copy()->addMonth();
             $daysInNextMonth = $nextMonth->daysInMonth;
             $effectiveDay    = min($billingDate, $daysInNextMonth);
@@ -129,7 +148,11 @@ class SubscriptionService
     public function appendDdays(Collection $subscriptions): Collection
     {
         return $subscriptions->each(function (Subscription $sub) {
-            $sub->setAttribute('days_until_billing', $this->calcDaysUntilBilling($sub->billing_date));
+            $sub->setAttribute('days_until_billing', $this->calcDaysUntilBilling(
+                $sub->billing_date,
+                $sub->billing_cycle ?? 'monthly',
+                $sub->billing_month,
+            ));
         });
     }
 

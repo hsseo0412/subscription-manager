@@ -13,6 +13,7 @@ class Subscription extends Model
         'price',
         'billing_cycle',
         'billing_date',
+        'billing_month',
         'category',
         'color',
         'memo',
@@ -23,10 +24,11 @@ class Subscription extends Model
     ];
 
     protected $casts = [
-        'price'        => 'integer',
-        'billing_date' => 'integer',
-        'members'      => 'integer',
-        'status'       => 'string',
+        'price'         => 'integer',
+        'billing_date'  => 'integer',
+        'billing_month' => 'integer',
+        'members'       => 'integer',
+        'status'        => 'string',
     ];
 
     public function user(): BelongsTo

@@ -14,6 +14,7 @@ const schema = z.object({
   price:             z.coerce.number({ invalid_type_error: '금액을 입력해주세요.' }).int().min(0, '금액은 0 이상이어야 합니다.'),
   billing_cycle:     z.enum(['monthly', 'yearly'], { required_error: '결제 주기를 선택해주세요.' }),
   billing_date:      z.coerce.number().int().min(1).max(31),
+  billing_month:     z.coerce.number().int().min(1).max(12).optional().or(z.literal('')),
   payment_method_id: z.coerce.number({ required_error: '결제수단을 선택해주세요.' }).int().positive('결제수단을 선택해주세요.'),
   category:          z.string().max(50).optional().or(z.literal('')),
   color:             z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
@@ -98,7 +99,8 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     setValue('website', '')
   }
 
-  const selectedColor = watch('color')
+  const selectedColor   = watch('color')
+  const watchedCycle    = watch('billing_cycle')
   const watchedPrice   = watch('price') || 0
   const watchedMembers = watch('members') || 1
 
@@ -249,8 +251,23 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
             {/* 결제일 + 카테고리 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">결제일 *</label>
-                <input type="number" min="1" max="31" placeholder="1" {...register('billing_date')} className={inputClass(!!errors.billing_date)} />
+                <label className="block text-sm font-medium text-gray-700">
+                  {watchedCycle === 'yearly' ? '결제 월 / 일 *' : '결제일 *'}
+                </label>
+                {watchedCycle === 'yearly' ? (
+                  <div className="flex gap-1.5">
+                    <select {...register('billing_month')} className={inputClass(!!errors.billing_month)}>
+                      <option value="">월</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <option key={m} value={m}>{m}월</option>
+                      ))}
+                    </select>
+                    <input type="number" min="1" max="31" placeholder="일" {...register('billing_date')} className={inputClass(!!errors.billing_date) + ' w-16'} />
+                  </div>
+                ) : (
+                  <input type="number" min="1" max="31" placeholder="1" {...register('billing_date')} className={inputClass(!!errors.billing_date)} />
+                )}
+                {errors.billing_month && <p className="text-xs text-red-500">{errors.billing_month.message}</p>}
                 {errors.billing_date && <p className="text-xs text-red-500">{errors.billing_date.message}</p>}
               </div>
               <div className="space-y-1">

@@ -63,7 +63,11 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
             {subscription.category && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{subscription.category}</span>
             )}
-            <span className="text-xs text-gray-400">매월 {subscription.billing_date}일</span>
+            <span className="text-xs text-gray-400">
+              {isYearly && subscription.billing_month
+                ? `매년 ${subscription.billing_month}월 ${subscription.billing_date}일`
+                : `매월 ${subscription.billing_date}일`}
+            </span>
             {subscription.days_until_billing != null && subscription.status === 'active' && (
               <DdayBadge days={subscription.days_until_billing} />
             )}
@@ -79,33 +83,44 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
           )}
         </div>
         <div className="flex gap-1 items-center">
-          {subscription.website && (
+          <select
+            value={subscription.status}
+            onChange={(e) => onStatusChange(subscription.id, e.target.value)}
+            title="구독 상태 변경"
+            className="text-xs border border-gray-200 rounded-lg pl-1.5 pr-7 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          >
+            <option value="active">활성</option>
+            <option value="paused">일시정지</option>
+            <option value="cancelled">해지</option>
+          </select>
+          {subscription.website ? (
             <a
               href={subscription.website}
               target="_blank"
               rel="noopener noreferrer"
+              title="홈페이지 방문"
               className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </a>
+          ) : (
+            <span
+              title="홈페이지 주소가 등록되지 않아 이용 불가"
+              className="p-1.5 text-gray-200 cursor-not-allowed rounded-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </span>
           )}
-          <select
-            value={subscription.status}
-            onChange={(e) => onStatusChange(subscription.id, e.target.value)}
-            className="text-xs border border-gray-200 rounded-lg px-1.5 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400"
-          >
-            <option value="active">활성</option>
-            <option value="paused">일시정지</option>
-            <option value="cancelled">해지</option>
-          </select>
-          <button onClick={() => onEdit(subscription)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+          <button title="수정" onClick={() => onEdit(subscription)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
-          <button onClick={() => onDelete(subscription.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+          <button title="삭제" onClick={() => onDelete(subscription.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
