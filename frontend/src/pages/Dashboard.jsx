@@ -23,6 +23,19 @@ import useThemeStore from '../stores/themeStore'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
 
+function TrialBadge({ days }) {
+  if (days < 0) return null
+  if (days === 0) return (
+    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full text-red-600 bg-red-50 dark:bg-red-900/30">체험 오늘 만료</span>
+  )
+  if (days <= 3) return (
+    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full text-orange-500 bg-orange-50 dark:bg-orange-900/30">체험 D-{days}</span>
+  )
+  return (
+    <span className="text-xs font-medium px-1.5 py-0.5 rounded-full text-violet-500 bg-violet-50 dark:bg-violet-900/30">체험 D-{days}</span>
+  )
+}
+
 const CHART_COLORS = [
   '#6366f1', '#10b981', '#f59e0b', '#ef4444',
   '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6',
@@ -48,7 +61,7 @@ function formatPrice(price) {
   return price.toLocaleString('ko-KR') + '원'
 }
 
-function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
+function SubscriptionCard({ subscription, paymentMethod, onEdit, onDelete, onStatusChange }) {
   const isYearly  = subscription.billing_cycle === 'yearly'
   const perPerson = subscription.members > 1
     ? Math.round((isYearly ? Math.round(subscription.price / 12) : subscription.price) / subscription.members)
@@ -62,10 +75,21 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
         <div className="flex-1 min-w-0 flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{subscription.name}</p>
+            {subscription.memo && (
+              <p className="text-xs text-gray-400 truncate mt-0.5" title={subscription.memo}>
+                {subscription.memo}
+              </p>
+            )}
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{formatPrice(subscription.price)}</p>
-            <p className="text-xs text-gray-400">{isYearly ? '/ 년' : '/ 월'}</p>
+            <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+              {formatPrice(subscription.price)} <span className="font-normal text-gray-400">{isYearly ? '/ 년' : '/ 월'}</span>
+            </p>
+            {paymentMethod && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {TYPE_LABELS[paymentMethod.type] ?? paymentMethod.type} · {paymentMethod.name}{paymentMethod.last4 ? ` (${paymentMethod.last4})` : ''}
+              </p>
+            )}
             {perPerson && (
               <p className="text-xs text-indigo-400">1인 {formatPrice(perPerson)}</p>
             )}
@@ -86,6 +110,9 @@ function SubscriptionCard({ subscription, onEdit, onDelete, onStatusChange }) {
           </span>
           {subscription.days_until_billing != null && subscription.status === 'active' && (
             <DdayBadge days={subscription.days_until_billing} />
+          )}
+          {subscription.days_until_trial_end != null && (
+            <TrialBadge days={subscription.days_until_trial_end} />
           )}
         </div>
         <div className="flex gap-1 items-center flex-shrink-0">
@@ -151,6 +178,7 @@ export default function Dashboard() {
   const [sortKey, setSortKey] = useState('billing_date')
   const [categoryFilter, setCategoryFilter] = useState('')
 
+  const paymentMap     = Object.fromEntries(paymentMethods.map(m => [m.id, m]))
   const subscriptions  = data?.subscriptions ?? []
   const monthlyTotal   = data?.monthly_total ?? 0
   const breakdown      = statsData?.category_breakdown ?? []
@@ -161,8 +189,16 @@ export default function Dashboard() {
     .filter((s) => s.status === 'active' && s.days_until_billing != null)
     .sort((a, b) => a.days_until_billing - b.days_until_billing)[0] ?? null
 
+  const today = new Date(); today.setHours(0, 0, 0, 0)
   const paymentSummary = paymentMethods.map((m) => {
-    const linked = subscriptions.filter((s) => s.payment_method_id === m.id && s.status === 'active')
+    const linked = subscriptions.filter((s) => {
+      if (s.payment_method_id !== m.id || s.status !== 'active') return false
+      if (s.trial_ends_at) {
+        const trialEnd = new Date(s.trial_ends_at); trialEnd.setHours(0, 0, 0, 0)
+        if (trialEnd >= today) return false
+      }
+      return true
+    })
     const total  = linked.reduce((sum, s) => {
       const base = s.billing_cycle === 'yearly' ? Math.round(s.price / 12) : s.price
       return sum + Math.round(base / Math.max(1, s.members || 1))
@@ -318,6 +354,7 @@ export default function Dashboard() {
                 <SubscriptionCard
                   key={sub.id}
                   subscription={sub}
+                  paymentMethod={paymentMap[sub.payment_method_id]}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onStatusChange={handleStatusChange}

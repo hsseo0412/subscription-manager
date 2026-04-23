@@ -81,8 +81,11 @@ class SubscriptionService
      */
     public function calcMonthlyTotal(Collection $subscriptions): int
     {
+        $today = Carbon::today();
+
         return (int) $subscriptions
             ->filter(fn(Subscription $sub) => $sub->status === 'active')
+            ->filter(fn(Subscription $sub) => !($sub->trial_ends_at !== null && $today->lte($sub->trial_ends_at)))
             ->sum(function (Subscription $sub) {
                 $base = $sub->billing_cycle === 'yearly'
                     ? (int) round($sub->price / 12)
@@ -147,12 +150,21 @@ class SubscriptionService
      */
     public function appendDdays(Collection $subscriptions): Collection
     {
-        return $subscriptions->each(function (Subscription $sub) {
+        $today = Carbon::today();
+
+        return $subscriptions->each(function (Subscription $sub) use ($today) {
             $sub->setAttribute('days_until_billing', $this->calcDaysUntilBilling(
                 $sub->billing_date,
                 $sub->billing_cycle ?? 'monthly',
                 $sub->billing_month,
             ));
+
+            if ($sub->trial_ends_at !== null) {
+                $sub->setAttribute(
+                    'days_until_trial_end',
+                    (int) $today->diffInDays($sub->trial_ends_at, false)
+                );
+            }
         });
     }
 
@@ -176,6 +188,7 @@ class SubscriptionService
 
             $monthSubs = $subscriptions->filter(
                 fn(Subscription $sub) => Carbon::parse($sub->created_at)->lte($endOfMonth)
+                    && !($sub->trial_ends_at !== null && Carbon::today()->lte($sub->trial_ends_at))
             );
 
             $total = (int) $monthSubs->sum(function (Subscription $sub) {
@@ -208,7 +221,13 @@ class SubscriptionService
         $breakdown = [];
         $monthlyTotal = 0;
 
+        $today = Carbon::today();
+
         foreach ($subscriptions as $sub) {
+            if ($sub->trial_ends_at !== null && $today->lte($sub->trial_ends_at)) {
+                continue;
+            }
+
             $base = $sub->billing_cycle === 'yearly'
                 ? (int) round($sub->price / 12)
                 : $sub->price;

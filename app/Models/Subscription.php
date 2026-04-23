@@ -21,14 +21,16 @@ class Subscription extends Model
         'status',
         'members',
         'website',
+        'trial_ends_at',
     ];
 
     protected $casts = [
-        'price'         => 'integer',
-        'billing_date'  => 'integer',
-        'billing_month' => 'integer',
-        'members'       => 'integer',
-        'status'        => 'string',
+        'price'          => 'integer',
+        'billing_date'   => 'integer',
+        'billing_month'  => 'integer',
+        'members'        => 'integer',
+        'status'         => 'string',
+        'trial_ends_at'  => 'date',
     ];
 
     public function user(): BelongsTo

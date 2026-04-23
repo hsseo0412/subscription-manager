@@ -26,6 +26,7 @@ class SubscriptionRequest extends FormRequest
             'status'             => ['sometimes', 'in:active,paused,cancelled'],
             'members'            => ['sometimes', 'integer', 'min:1', 'max:99'],
             'website'            => ['nullable', 'url', 'max:255'],
+            'trial_ends_at'      => ['nullable', 'date'],
         ];
     }
 
@@ -54,6 +55,7 @@ class SubscriptionRequest extends FormRequest
             'members.max'            => '인원수는 99명 이하여야 합니다.',
             'website.url'            => '올바른 URL 형식이어야 합니다.',
             'website.max'            => 'URL은 255자 이하여야 합니다.',
+            'trial_ends_at.date'     => '유효한 날짜를 입력해주세요.',
         ];
     }
 }

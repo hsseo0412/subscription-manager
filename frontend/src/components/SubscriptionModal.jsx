@@ -29,6 +29,7 @@ const schema = z.object({
   color:             z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().or(z.literal('')),
   memo:              z.string().optional().or(z.literal('')),
   website:           z.string().url('올바른 URL 형식이어야 합니다.').optional().or(z.literal('')),
+  trial_ends_at:     z.string().optional().or(z.literal('')),
   members:           z.coerce.number().int().min(1, '인원수는 1명 이상이어야 합니다.').max(99).default(1),
 })
 
@@ -71,10 +72,17 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
       setShowDropdown(false)
       setSelectedService(null)
       reset(
-        editTarget ?? {
-          name: '', price: '', billing_cycle: 'monthly',
-          billing_date: 1, category: '', color: '#6366f1', memo: '', members: 1,
-        }
+        editTarget
+          ? {
+              ...editTarget,
+              billing_month:  editTarget.billing_month  ?? '',
+              category:       editTarget.category       ?? '',
+              color:          editTarget.color          ?? '#6366f1',
+              memo:           editTarget.memo           ?? '',
+              website:        editTarget.website        ?? '',
+              trial_ends_at:  editTarget.trial_ends_at?.slice(0, 10) ?? '',
+            }
+          : { name: '', price: '', billing_cycle: 'monthly', billing_date: 1, category: '', color: '#6366f1', memo: '', members: 1, trial_ends_at: '' }
       )
     }
   }, [isOpen, editTarget, reset])
@@ -329,6 +337,18 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                   />
                 )}
               </div>
+            </div>
+
+            {/* 무료체험 종료일 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">무료체험 종료일</label>
+              <Input
+                type="date"
+                {...register('trial_ends_at')}
+                className={errors.trial_ends_at ? 'border-red-400 bg-red-50' : ''}
+              />
+              {errors.trial_ends_at && <p className="text-xs text-red-500">{errors.trial_ends_at.message}</p>}
+              <p className="text-xs text-gray-400">무료체험 중인 경우 종료일을 입력하면 카드에 표시됩니다.</p>
             </div>
 
             {/* 홈페이지 URL */}
