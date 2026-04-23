@@ -6,6 +6,7 @@ import {
   useDeleteSubscription,
   useUpdateSubscriptionStatus,
   useSubscriptionStats,
+  useMonthlyHistory,
 } from '../hooks/useSubscriptions'
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import SubscriptionModal from '../components/SubscriptionModal'
@@ -16,7 +17,7 @@ import StatsSkeleton from '../components/ui/StatsSkeleton'
 import DdayBadge from '../components/ui/DdayBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { PlusIcon, SearchIcon, SunIcon, MoonIcon } from 'lucide-react'
 import useThemeStore from '../stores/themeStore'
 
@@ -140,6 +141,7 @@ export default function Dashboard() {
   const { data, isLoading } = useSubscriptions(statusFilter)
   const { data: paymentMethods = [] } = usePaymentMethods()
   const { data: statsData } = useSubscriptionStats()
+  const { data: historyData } = useMonthlyHistory()
   const deleteMutation = useDeleteSubscription()
   const statusMutation = useUpdateSubscriptionStatus()
 
@@ -358,6 +360,42 @@ export default function Dashboard() {
                       ))}
                     </ul>
                   </div>
+                </div>
+              )}
+
+              {/* 월별 지출 추이 */}
+              {historyData && historyData.some(h => h.total > 0) && (
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5">
+                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">월별 지출 추이</h2>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <AreaChart data={historyData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                      <defs>
+                        <linearGradient id="historyGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                      <YAxis
+                        tickFormatter={(v) => v >= 10000 ? `${Math.round(v / 10000)}만` : `${Math.round(v / 1000)}천`}
+                        tick={{ fontSize: 10 }}
+                        tickLine={false}
+                        axisLine={false}
+                        width={32}
+                      />
+                      <Tooltip formatter={(v) => [`${v.toLocaleString('ko-KR')}원`, '월 구독료']} />
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        stroke="#6366f1"
+                        fill="url(#historyGradient)"
+                        strokeWidth={2}
+                        dot={{ r: 3, fill: '#6366f1', strokeWidth: 0 }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               )}
 

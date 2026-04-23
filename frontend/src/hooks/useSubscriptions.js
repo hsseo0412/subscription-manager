@@ -16,6 +16,12 @@ async function fetchStats() {
   return data.data
 }
 
+/** GET /api/subscriptions/history — 최근 6개월 월별 지출 */
+async function fetchMonthlyHistory() {
+  const { data } = await api.get('/api/subscriptions/history')
+  return data.data
+}
+
 /** 구독 목록 조회 훅 (status 필터 선택적) */
 export function useSubscriptions(status) {
   return useQuery({
@@ -29,6 +35,14 @@ export function useSubscriptionStats() {
   return useQuery({
     queryKey: [BASE_KEY, 'stats'],
     queryFn: fetchStats,
+  })
+}
+
+/** 최근 6개월 월별 지출 추이 훅 */
+export function useMonthlyHistory() {
+  return useQuery({
+    queryKey: [BASE_KEY, 'history'],
+    queryFn: fetchMonthlyHistory,
   })
 }
 

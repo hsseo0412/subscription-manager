@@ -157,6 +157,45 @@ class SubscriptionService
     }
 
     /**
+     * 최근 N개월 월별 지출 추이 반환
+     * 각 월의 비용 = 해당 월 이전 등록된 현재 활성 구독 기준
+     *
+     * @param int $userId
+     * @param int $months
+     * @return array<int, array{month: string, label: string, total: int}>
+     */
+    public function getMonthlyHistory(int $userId, int $months = 6): array
+    {
+        $subscriptions = $this->repository->findActiveByUser($userId);
+        $now = Carbon::now();
+        $history = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $target     = $now->copy()->subMonths($i)->startOfMonth();
+            $endOfMonth = $target->copy()->endOfMonth();
+
+            $monthSubs = $subscriptions->filter(
+                fn(Subscription $sub) => Carbon::parse($sub->created_at)->lte($endOfMonth)
+            );
+
+            $total = (int) $monthSubs->sum(function (Subscription $sub) {
+                $base = $sub->billing_cycle === 'yearly'
+                    ? (int) round($sub->price / 12)
+                    : $sub->price;
+                return (int) round($base / max(1, $sub->members));
+            });
+
+            $history[] = [
+                'month' => $target->format('Y-m'),
+                'label' => $target->format('n') . '월',
+                'total' => $total,
+            ];
+        }
+
+        return $history;
+    }
+
+    /**
      * 카테고리별 지출 통계 반환 (활성 구독 기준)
      *
      * @param int $userId

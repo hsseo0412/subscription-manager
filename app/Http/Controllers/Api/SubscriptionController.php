@@ -128,6 +128,20 @@ class SubscriptionController extends Controller
     }
 
     /**
+     * GET /api/subscriptions/history
+     * 최근 6개월 월별 지출 추이 반환
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $history = $this->service->getMonthlyHistory($request->user()->id);
+
+        return response()->json(['data' => $history]);
+    }
+
+    /**
      * DELETE /api/subscriptions/{subscription}
      * 구독 삭제
      *
