@@ -4,13 +4,15 @@ namespace App\Services;
 
 use App\Models\Subscription;
 use App\Repositories\SubscriptionRepository;
+use App\Services\ExchangeRateService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 
 class SubscriptionService
 {
     public function __construct(
-        private SubscriptionRepository $repository
+        private SubscriptionRepository $repository,
+        private ExchangeRateService    $exchangeRate,
     ) {}
 
     /**
@@ -73,8 +75,24 @@ class SubscriptionService
     }
 
     /**
+     * 구독 1건의 월 환산 원화 비용 계산 (N분의 1 + 외화 환산 포함)
+     *
+     * @param Subscription $sub
+     * @return int
+     */
+    private function calcMonthlyKrw(Subscription $sub): int
+    {
+        $priceKrw = $this->exchangeRate->toKrw($sub->price, $sub->currency ?? 'KRW');
+        $base     = $sub->billing_cycle === 'yearly'
+            ? (int) round($priceKrw / 12)
+            : $priceKrw;
+
+        return (int) round($base / max(1, $sub->members));
+    }
+
+    /**
      * 월 환산 총 구독료 계산
-     * active 구독만 포함, N분의 1 실부담금 기준
+     * active 구독만 포함, N분의 1 실부담금 기준, 외화는 원화 환산
      *
      * @param Collection $subscriptions
      * @return int
@@ -86,12 +104,7 @@ class SubscriptionService
         return (int) $subscriptions
             ->filter(fn(Subscription $sub) => $sub->status === 'active')
             ->filter(fn(Subscription $sub) => !($sub->trial_ends_at !== null && $today->lte($sub->trial_ends_at)))
-            ->sum(function (Subscription $sub) {
-                $base = $sub->billing_cycle === 'yearly'
-                    ? (int) round($sub->price / 12)
-                    : $sub->price;
-                return (int) round($base / max(1, $sub->members));
-            });
+            ->sum(fn(Subscription $sub) => $this->calcMonthlyKrw($sub));
     }
 
     /**
@@ -191,12 +204,7 @@ class SubscriptionService
                     && !($sub->trial_ends_at !== null && Carbon::today()->lte($sub->trial_ends_at))
             );
 
-            $total = (int) $monthSubs->sum(function (Subscription $sub) {
-                $base = $sub->billing_cycle === 'yearly'
-                    ? (int) round($sub->price / 12)
-                    : $sub->price;
-                return (int) round($base / max(1, $sub->members));
-            });
+            $total = (int) $monthSubs->sum(fn(Subscription $sub) => $this->calcMonthlyKrw($sub));
 
             $history[] = [
                 'month' => $target->format('Y-m'),
@@ -228,10 +236,7 @@ class SubscriptionService
                 continue;
             }
 
-            $base = $sub->billing_cycle === 'yearly'
-                ? (int) round($sub->price / 12)
-                : $sub->price;
-            $cost = (int) round($base / max(1, $sub->members));
+            $cost = $this->calcMonthlyKrw($sub);
 
             $category = ($sub->category !== null && $sub->category !== '') ? $sub->category : '기타';
 

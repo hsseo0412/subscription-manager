@@ -11,6 +11,7 @@ class Subscription extends Model
         'user_id',
         'name',
         'price',
+        'currency',
         'billing_cycle',
         'billing_date',
         'billing_month',
@@ -30,6 +31,7 @@ class Subscription extends Model
         'billing_month'  => 'integer',
         'members'        => 'integer',
         'status'         => 'string',
+        'currency'       => 'string',
         'trial_ends_at'  => 'date',
     ];
 

@@ -16,6 +16,7 @@ class SubscriptionRequest extends FormRequest
         return [
             'name'          => ['required', 'string', 'max:100'],
             'price'         => ['required', 'integer', 'min:0'],
+            'currency'      => ['sometimes', 'in:KRW,USD,EUR'],
             'billing_cycle' => ['required', 'in:monthly,yearly'],
             'billing_date'  => ['required', 'integer', 'min:1', 'max:31'],
             'billing_month' => ['nullable', 'required_if:billing_cycle,yearly', 'integer', 'min:1', 'max:12'],
@@ -39,6 +40,7 @@ class SubscriptionRequest extends FormRequest
             'price.integer'          => '금액은 숫자여야 합니다.',
             'price.min'              => '금액은 0 이상이어야 합니다.',
             'billing_cycle.required' => '결제 주기를 선택해주세요.',
+            'currency.in'            => '지원하지 않는 통화입니다. (KRW, USD, EUR)',
             'billing_cycle.in'       => '결제 주기는 monthly 또는 yearly여야 합니다.',
             'billing_date.required'  => '결제일을 입력해주세요.',
             'billing_date.min'       => '결제일은 1일 이상이어야 합니다.',

@@ -9,6 +9,7 @@ import {
   useMonthlyHistory,
 } from '../hooks/useSubscriptions'
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
+import { useExchangeRates, toKrw } from '../hooks/useExchangeRates'
 import SubscriptionModal from '../components/SubscriptionModal'
 import HeroBand from '../components/HeroBand'
 import EmptyState from '../components/EmptyState'
@@ -61,10 +62,17 @@ function formatPrice(price) {
   return price.toLocaleString('ko-KR') + '원'
 }
 
-function SubscriptionCard({ subscription, paymentMethod, onEdit, onDelete, onStatusChange }) {
-  const isYearly  = subscription.billing_cycle === 'yearly'
-  const perPerson = subscription.members > 1
-    ? Math.round((isYearly ? Math.round(subscription.price / 12) : subscription.price) / subscription.members)
+const CURRENCY_SYMBOL = { KRW: '₩', USD: '$', EUR: '€' }
+
+function SubscriptionCard({ subscription, paymentMethod, onEdit, onDelete, onStatusChange, rates }) {
+  const isYearly   = subscription.billing_cycle === 'yearly'
+  const currency   = subscription.currency ?? 'KRW'
+  const isForeign  = currency !== 'KRW'
+  const symbol     = CURRENCY_SYMBOL[currency] ?? '₩'
+
+  const priceKrw   = toKrw(subscription.price, currency, rates)
+  const perPerson  = subscription.members > 1
+    ? Math.round((isYearly ? Math.round(priceKrw / 12) : priceKrw) / subscription.members)
     : null
 
   return (
@@ -82,9 +90,18 @@ function SubscriptionCard({ subscription, paymentMethod, onEdit, onDelete, onSta
             )}
           </div>
           <div className="text-right flex-shrink-0">
-            <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-              {formatPrice(subscription.price)} <span className="font-normal text-gray-400">{isYearly ? '/ 년' : '/ 월'}</span>
-            </p>
+            {isForeign ? (
+              <>
+                <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+                  {symbol}{subscription.price.toLocaleString()} <span className="font-normal text-gray-400">{isYearly ? '/ 년' : '/ 월'}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">≈ {formatPrice(priceKrw)}</p>
+              </>
+            ) : (
+              <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+                {formatPrice(subscription.price)} <span className="font-normal text-gray-400">{isYearly ? '/ 년' : '/ 월'}</span>
+              </p>
+            )}
             {paymentMethod && (
               <p className="text-xs text-gray-400 mt-0.5">
                 {TYPE_LABELS[paymentMethod.type] ?? paymentMethod.type} · {paymentMethod.name}{paymentMethod.last4 ? ` (${paymentMethod.last4})` : ''}
@@ -169,6 +186,7 @@ export default function Dashboard() {
   const { data: paymentMethods = [] } = usePaymentMethods()
   const { data: statsData } = useSubscriptionStats()
   const { data: historyData } = useMonthlyHistory()
+  const { data: exchangeRates } = useExchangeRates()
   const deleteMutation = useDeleteSubscription()
   const statusMutation = useUpdateSubscriptionStatus()
 
@@ -358,6 +376,7 @@ export default function Dashboard() {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onStatusChange={handleStatusChange}
+                  rates={exchangeRates}
                 />
               ))}
             </div>

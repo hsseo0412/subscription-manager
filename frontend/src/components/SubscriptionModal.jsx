@@ -18,9 +18,16 @@ import { Button } from '@/components/ui/button'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
 
+const CURRENCIES = [
+  { value: 'KRW', label: '₩ KRW' },
+  { value: 'USD', label: '$ USD' },
+  { value: 'EUR', label: '€ EUR' },
+]
+
 const schema = z.object({
   name:              z.string().min(1, '서비스명을 입력해주세요.').max(100),
   price:             z.coerce.number({ invalid_type_error: '금액을 입력해주세요.' }).int().min(0, '금액은 0 이상이어야 합니다.'),
+  currency:          z.enum(['KRW', 'USD', 'EUR']).default('KRW'),
   billing_cycle:     z.enum(['monthly', 'yearly'], { required_error: '결제 주기를 선택해주세요.' }),
   billing_date:      z.coerce.number().int().min(1).max(31),
   billing_month:     z.coerce.number().int().min(1).max(12).optional().or(z.literal('')),
@@ -63,7 +70,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { billing_cycle: 'monthly', billing_date: 1, color: '#6366f1', members: 1 },
+    defaultValues: { billing_cycle: 'monthly', billing_date: 1, color: '#6366f1', members: 1, currency: 'KRW' },
   })
 
   useEffect(() => {
@@ -75,6 +82,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
         editTarget
           ? {
               ...editTarget,
+              currency:       editTarget.currency       ?? 'KRW',
               billing_month:  editTarget.billing_month  ?? '',
               category:       editTarget.category       ?? '',
               color:          editTarget.color          ?? '#6366f1',
@@ -82,7 +90,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
               website:        editTarget.website        ?? '',
               trial_ends_at:  editTarget.trial_ends_at?.slice(0, 10) ?? '',
             }
-          : { name: '', price: '', billing_cycle: 'monthly', billing_date: 1, category: '', color: '#6366f1', memo: '', members: 1, trial_ends_at: '' }
+          : { name: '', price: '', currency: 'KRW', billing_cycle: 'monthly', billing_date: 1, category: '', color: '#6366f1', memo: '', members: 1, trial_ends_at: '' }
       )
     }
   }, [isOpen, editTarget, reset])
@@ -120,10 +128,12 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
     setValue('website', '')
   }
 
-  const selectedColor  = watch('color')
-  const watchedCycle   = watch('billing_cycle')
-  const watchedPrice   = watch('price') || 0
-  const watchedMembers = watch('members') || 1
+  const selectedColor    = watch('color')
+  const watchedCycle     = watch('billing_cycle')
+  const watchedPrice     = watch('price') || 0
+  const watchedMembers   = watch('members') || 1
+  const watchedCurrency  = watch('currency') || 'KRW'
+  const currencySymbol   = watchedCurrency === 'USD' ? '$' : watchedCurrency === 'EUR' ? '€' : '₩'
 
   const onSubmit = async (data) => {
     try {
@@ -215,20 +225,31 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
             </div>
 
-            {/* 금액 + 결제 주기 */}
+            {/* 금액 + 통화 + 결제 주기 */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">금액 (원) *</label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="17000"
-                  {...register('price')}
-                  className={errors.price ? 'border-red-400 bg-red-50' : ''}
-                />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  금액 ({watchedCurrency}) *
+                </label>
+                <div className="flex gap-1.5">
+                  <select {...register('currency')} className={`w-24 flex-shrink-0 ${selectClass(false)}`}>
+                    {CURRENCIES.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder={watchedCurrency === 'KRW' ? '17000' : '9.99'}
+                    {...register('price')}
+                    className={errors.price ? 'border-red-400 bg-red-50' : ''}
+                  />
+                </div>
                 {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
                 {watchedMembers > 1 && watchedPrice > 0 && (
-                  <p className="text-xs text-indigo-500">1인 부담: {Math.round(watchedPrice / watchedMembers).toLocaleString('ko-KR')}원</p>
+                  <p className="text-xs text-indigo-500">
+                    1인 부담: {currencySymbol}{Math.round(watchedPrice / watchedMembers).toLocaleString('ko-KR')}
+                  </p>
                 )}
               </div>
               <div className="space-y-1">

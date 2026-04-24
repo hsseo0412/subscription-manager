@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ExchangeRateController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -20,6 +21,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('user', function (Request $request) {
         return response()->json(['data' => $request->user()]);
     });
+
+    Route::get('exchange-rates', [ExchangeRateController::class, 'index']);
 
     Route::patch('user/profile', [ProfileController::class, 'update']);
     Route::delete('user', [ProfileController::class, 'destroy']);
