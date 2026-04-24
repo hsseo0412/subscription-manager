@@ -155,7 +155,7 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{isEdit ? '구독 수정' : '구독 추가'}</DialogTitle>
         </DialogHeader>
@@ -213,6 +213,15 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
           )}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            {/* 카테고리 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">카테고리</label>
+              <select {...register('category')} className={selectClass(false)}>
+                <option value="">선택 안 함</option>
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
             {/* 서비스명 */}
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">서비스명 *</label>
@@ -223,42 +232,6 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 className={errors.name ? 'border-red-400 bg-red-50' : ''}
               />
               {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-            </div>
-
-            {/* 금액 + 통화 + 결제 주기 */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  금액 ({watchedCurrency}) *
-                </label>
-                <div className="flex gap-1.5">
-                  <select {...register('currency')} className={`w-24 flex-shrink-0 ${selectClass(false)}`}>
-                    {CURRENCIES.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder={watchedCurrency === 'KRW' ? '17000' : '9.99'}
-                    {...register('price')}
-                    className={errors.price ? 'border-red-400 bg-red-50' : ''}
-                  />
-                </div>
-                {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
-                {watchedMembers > 1 && watchedPrice > 0 && (
-                  <p className="text-xs text-indigo-500">
-                    1인 부담: {currencySymbol}{Math.round(watchedPrice / watchedMembers).toLocaleString('ko-KR')}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">결제 주기 *</label>
-                <select {...register('billing_cycle')} className={selectClass(!!errors.billing_cycle)}>
-                  <option value="monthly">매월</option>
-                  <option value="yearly">매년</option>
-                </select>
-              </div>
             </div>
 
             {/* 결제수단 */}
@@ -278,8 +251,15 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
               )}
             </div>
 
-            {/* 결제일 + 카테고리 */}
+            {/* 결제 주기 + 결제일 */}
             <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">결제 주기 *</label>
+                <select {...register('billing_cycle')} className={selectClass(!!errors.billing_cycle)}>
+                  <option value="monthly">매월</option>
+                  <option value="yearly">매년</option>
+                </select>
+              </div>
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {watchedCycle === 'yearly' ? '결제 월 / 일 *' : '결제일 *'}
@@ -314,12 +294,33 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                 {errors.billing_month && <p className="text-xs text-red-500">{errors.billing_month.message}</p>}
                 {errors.billing_date && <p className="text-xs text-red-500">{errors.billing_date.message}</p>}
               </div>
+            </div>
+
+            {/* 통화 + 금액 */}
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">카테고리</label>
-                <select {...register('category')} className={selectClass(false)}>
-                  <option value="">선택 안 함</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">통화</label>
+                <select {...register('currency')} className={selectClass(false)}>
+                  {CURRENCIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
                 </select>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">금액 *</label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder={watchedCurrency === 'KRW' ? '17000' : '9.99'}
+                  {...register('price')}
+                  className={errors.price ? 'border-red-400 bg-red-50' : ''}
+                />
+                {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
+                {watchedMembers > 1 && watchedPrice > 0 && (
+                  <p className="text-xs text-indigo-500">
+                    1인: {currencySymbol}{Math.round(watchedPrice / watchedMembers).toLocaleString('ko-KR')}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -336,6 +337,18 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
               />
               {errors.members && <p className="text-xs text-red-500">{errors.members.message}</p>}
               <p className="text-xs text-gray-400">여러 명이 나눠서 결제할 경우 입력하세요.</p>
+            </div>
+
+            {/* 무료체험 종료일 */}
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">무료체험 종료일</label>
+              <Input
+                type="date"
+                {...register('trial_ends_at')}
+                className={errors.trial_ends_at ? 'border-red-400 bg-red-50' : ''}
+              />
+              {errors.trial_ends_at && <p className="text-xs text-red-500">{errors.trial_ends_at.message}</p>}
+              <p className="text-xs text-gray-400">무료체험 중인 경우 종료일을 입력하면 카드에 표시됩니다.</p>
             </div>
 
             {/* 색상 */}
@@ -358,18 +371,6 @@ export default function SubscriptionModal({ isOpen, onClose, editTarget }) {
                   />
                 )}
               </div>
-            </div>
-
-            {/* 무료체험 종료일 */}
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">무료체험 종료일</label>
-              <Input
-                type="date"
-                {...register('trial_ends_at')}
-                className={errors.trial_ends_at ? 'border-red-400 bg-red-50' : ''}
-              />
-              {errors.trial_ends_at && <p className="text-xs text-red-500">{errors.trial_ends_at.message}</p>}
-              <p className="text-xs text-gray-400">무료체험 중인 경우 종료일을 입력하면 카드에 표시됩니다.</p>
             </div>
 
             {/* 홈페이지 URL */}
