@@ -11,6 +11,7 @@ import {
 import { usePaymentMethods } from '../hooks/usePaymentMethods'
 import { useExchangeRates, toKrw } from '../hooks/useExchangeRates'
 import SubscriptionModal from '../components/SubscriptionModal'
+import CalendarView from '../components/CalendarView'
 import HeroBand from '../components/HeroBand'
 import EmptyState from '../components/EmptyState'
 import SubscriptionSkeleton from '../components/ui/SubscriptionSkeleton'
@@ -19,7 +20,7 @@ import DdayBadge from '../components/ui/DdayBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts'
-import { PlusIcon, SearchIcon, SunIcon, MoonIcon } from 'lucide-react'
+import { PlusIcon, SearchIcon, SunIcon, MoonIcon, ListIcon, CalendarDaysIcon } from 'lucide-react'
 import useThemeStore from '../stores/themeStore'
 
 const TYPE_LABELS = { card: '카드', transfer: '계좌이체', cash: '현금', etc: '기타' }
@@ -195,6 +196,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [sortKey, setSortKey] = useState('billing_date')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [viewMode, setViewMode] = useState('list')
 
   const paymentMap     = Object.fromEntries(paymentMethods.map(m => [m.id, m]))
   const subscriptions  = data?.subscriptions ?? []
@@ -280,7 +282,33 @@ export default function Dashboard() {
         {/* 좌측: 구독 목록 */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">구독 목록</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">구독 목록</h2>
+              <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <button
+                  onClick={() => setViewMode('list')}
+                  title="목록 뷰"
+                  className={`p-1.5 transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-white dark:bg-gray-800'
+                  }`}
+                >
+                  <ListIcon className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('calendar')}
+                  title="캘린더 뷰"
+                  className={`p-1.5 border-l border-gray-200 dark:border-gray-700 transition-colors ${
+                    viewMode === 'calendar'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-white dark:bg-gray-800'
+                  }`}
+                >
+                  <CalendarDaysIcon className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
             <Button onClick={handleAdd} size="sm">
               <PlusIcon className="w-4 h-4 mr-1" />
               추가
@@ -357,8 +385,15 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* 목록 본문 */}
-          {isLoading ? (
+          {/* 목록 / 캘린더 본문 */}
+          {viewMode === 'calendar' ? (
+            <CalendarView
+              subscriptions={displayed}
+              paymentMap={paymentMap}
+              rates={exchangeRates}
+              onEdit={handleEdit}
+            />
+          ) : isLoading ? (
             <SubscriptionSkeleton count={4} />
           ) : subscriptions.length === 0 && !statusFilter ? (
             <EmptyState onAdd={handleAdd} />
